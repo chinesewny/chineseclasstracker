@@ -1,0 +1,1160 @@
+<!doctype html>
+<html lang="th">
+ <head>
+  <meta charset="UTF-8">
+  <title>ChineseClass Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script><!-- Canva Element SDK -->
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+      body {
+        box-sizing: border-box;
+      }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="w-full h-full">
+  <div id="app-root" class="w-full h-full bg-slate-950 flex items-stretch justify-center">
+   <div class="app-wrapper w-full max-w-6xl my-4 mx-2 md:mx-4 rounded-2xl bg-slate-900/90 shadow-xl border border-slate-800 flex flex-col">
+    <header class="w-full px-6 py-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+     <div>
+      <h1 id="app-title" class="text-2xl md:text-3xl font-semibold text-white tracking-wide">ChineseClass-Tracker</h1>
+      <p class="text-slate-300 text-sm md:text-base mt-1">ระบบตรวจสอบคะแนนวิชาภาษาจีน สำหรับคุณครูและนักเรียน</p>
+     </div>
+     <nav class="inline-flex rounded-full bg-slate-800/50 p-1 border border-slate-700" aria-label="โหมดการใช้งาน"><button id="tab-admin" type="button" class="tab-button relative px-4 py-2.5 rounded-full text-sm md:text-base font-medium text-white bg-indigo-600 shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-slate-900" data-target="admin"> คุณครู (Admin) </button> <button id="tab-student" type="button" class="tab-button relative px-4 py-2.5 rounded-full text-sm md:text-base font-medium text-slate-300 bg-transparent hover:bg-slate-800/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-slate-900" data-target="student"> นักเรียน </button>
+     </nav>
+    </header>
+    <main class="flex-1 w-full px-4 md:px-6 pb-6 overflow-auto"><!-- MAIN CONTENT WRAPPER -->
+     <div class="w-full max-w-5xl mx-auto mt-4 lg:mt-6 flex flex-col gap-5" aria-live="polite"><!-- ADMIN PANEL (Login + Content) -->
+      <section id="panel-admin" class="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 md:p-6 flex flex-col gap-4"><!-- Admin Login -->
+       <div id="admin-login-section" class="flex flex-col gap-4">
+        <h2 id="admin-login-title" class="text-xl font-semibold text-white text-center">เข้าสู่ระบบคุณครู</h2>
+        <p class="text-slate-300 text-sm text-center">กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบ</p>
+        <form id="admin-login-form" class="space-y-4 max-w-sm mx-auto w-full mt-2">
+         <div><label for="admin-username" class="block text-sm font-medium text-slate-300 mb-1">ชื่อผู้ใช้</label> <input id="admin-username" name="admin-username" type="text" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" autocomplete="off" value="admin">
+         </div>
+         <div><label for="admin-password" class="block text-sm font-medium text-slate-300 mb-1">รหัสผ่าน</label> <input id="admin-password" name="admin-password" type="password" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" autocomplete="off" value="admin290936">
+         </div><button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-slate-900"> เข้าสู่ระบบ </button>
+         <p id="admin-login-status" class="text-xs text-slate-300 text-center min-h-[1.5em]" aria-live="polite"></p>
+        </form>
+        <div id="admin-login-error" class="hidden text-sm text-red-200 bg-red-900/20 border border-red-500/30 rounded-lg px-4 py-3 text-center max-w-sm mx-auto w-full">
+          ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง ลองใหม่อีกครั้ง
+        </div>
+       </div><!-- Admin Content -->
+       <div id="admin-content-section" class="hidden flex flex-col gap-4">
+        <div class="flex items-center justify-between gap-2">
+         <div>
+          <h2 class="text-xl font-semibold text-indigo-300 flex items-center gap-2">โหมดคุณครู <span class="inline-flex items-center rounded-full bg-indigo-900/30 border border-indigo-500/50 px-2 py-0.5 text-xs font-medium text-indigo-100">เข้าสู่ระบบแล้ว</span></h2>
+         </div><button id="admin-logout-button" type="button" class="text-xs md:text-sm px-3 py-1.5 rounded-lg border border-red-500/50 text-red-300 hover:bg-red-900/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-400 focus-visible:ring-offset-slate-900"> ออกจากระบบ </button>
+        </div><!-- Admin Tabs -->
+        <div class="inline-flex rounded-xl bg-slate-950/50 border border-slate-800 p-1 flex-wrap gap-1"><button id="admin-tab-basic" type="button" class="admin-subtab-button flex-1 px-3 py-2 rounded-lg text-xs md:text-sm font-medium text-white bg-slate-800 shadow-sm" data-target="basic"> จัดการข้อมูลพื้นฐาน </button> <button id="admin-tab-scan" type="button" class="admin-subtab-button flex-1 px-3 py-2 rounded-lg text-xs md:text-sm font-medium text-slate-300 hover:bg-slate-800/50" data-target="scan"> บันทึกคะแนน (Scan) </button> <button id="admin-tab-report" type="button" class="admin-subtab-button flex-1 px-3 py-2 rounded-lg text-xs md:text-sm font-medium text-slate-300 hover:bg-slate-800/50" data-target="report"> รายงานผล (Report) </button>
+        </div><!-- Admin Sub Panels -->
+        <div class="space-y-4"><!-- BASIC DATA PANEL -->
+         <section id="admin-panel-basic" class="bg-slate-900/30 border border-slate-800 rounded-2xl p-4 md:p-5 flex flex-col gap-4">
+          <h3 id="basic-data-title" class="text-lg font-semibold text-white">จัดการข้อมูลพื้นฐาน</h3>
+          <p class="text-slate-300 text-sm">แนะนำให้สร้างข้อมูลตามลำดับ: วิชา → ห้องเรียน → นักเรียน → งาน</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5"><!-- Subjects -->
+           <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-3 md:p-4 flex flex-col gap-3">
+            <h4 class="text-sm font-semibold text-white">1. วิชา (Subject)</h4>
+            <form id="form-subject" class="space-y-2">
+             <div><label for="subject-name" class="block text-xs font-medium text-slate-300 mb-1">ชื่อวิชา</label> <input id="subject-name" name="subject-name" type="text" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="เช่น ภาษาจีน ป.5, คณิตศาสตร์">
+             </div><button type="submit" class="w-full inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-slate-900"> เพิ่มวิชา </button>
+            </form>
+            <div class="mt-1">
+             <p class="text-xs text-slate-400 mb-1">รายการวิชาที่สร้างแล้ว:</p>
+             <ul id="subject-list" class="text-xs text-slate-300 space-y-0.5 max-h-32 overflow-auto"></ul>
+            </div>
+           </div><!-- Classes -->
+           <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-3 md:p-4 flex flex-col gap-3">
+            <h4 class="text-sm font-semibold text-white">2. ห้องเรียน (Class)</h4>
+            <form id="form-class" class="space-y-2">
+             <div><label for="class-name" class="block text-xs font-medium text-slate-300 mb-1">ชื่อห้องเรียน (กลุ่มนักเรียน)</label> <input id="class-name" name="class-name" type="text" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="เช่น ป.5/1, ป.5/2">
+              <p class="text-[10px] text-slate-500 mt-0.5">*ห้องเรียน 1 ห้อง สามารถเรียนได้หลายวิชา</p>
+             </div><button type="submit" class="w-full inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-slate-900"> เพิ่มห้องเรียน </button>
+            </form>
+            <div class="mt-1">
+             <p class="text-xs text-slate-400 mb-1">รายการห้องเรียน:</p>
+             <ul id="class-list" class="text-xs text-slate-300 space-y-0.5 max-h-32 overflow-auto"></ul>
+            </div>
+           </div><!-- Students -->
+           <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-3 md:p-4 flex flex-col gap-3">
+            <h4 class="text-sm font-semibold text-white">3. นักเรียน (Student)</h4>
+            <form id="form-student" class="space-y-2">
+             <div><label for="student-class" class="block text-xs font-medium text-slate-300 mb-1">เลือกห้องเรียน</label> <select id="student-class" name="student-class" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"> </select>
+             </div>
+             <div class="grid grid-cols-2 gap-2">
+              <div><label for="student-id" class="block text-xs font-medium text-slate-300 mb-1">รหัสนักเรียน (Barcode)</label> <input id="student-id" name="student-id" type="text" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="เช่น 65001">
+              </div>
+              <div><label for="student-name" class="block text-xs font-medium text-slate-300 mb-1">ชื่อนักเรียน</label> <input id="student-name" name="student-name" type="text" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="เช่น เด็กชายสมชาย">
+              </div>
+             </div><button type="submit" class="w-full inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-slate-900"> เพิ่มนักเรียน </button>
+            </form>
+            <div class="mt-1">
+             <p class="text-xs text-slate-400 mb-1">รายชื่อนักเรียนในห้อง (ล่าสุด):</p>
+             <ul id="student-list" class="text-xs text-slate-300 space-y-0.5 max-h-32 overflow-auto"></ul>
+            </div>
+           </div><!-- Tasks -->
+           <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-3 md:p-4 flex flex-col gap-3">
+            <h4 class="text-sm font-semibold text-white">4. งาน / แบบฝึกหัด (Task)</h4>
+            <form id="form-task" class="space-y-2">
+             <div class="grid grid-cols-2 gap-2">
+              <div><label for="task-subject" class="block text-xs font-medium text-slate-300 mb-1">เลือกวิชา</label> <select id="task-subject" name="task-subject" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"> </select>
+              </div>
+              <div><label for="task-class" class="block text-xs font-medium text-slate-300 mb-1">มอบหมายให้ห้อง</label> <select id="task-class" name="task-class" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"> </select>
+              </div>
+             </div>
+             <div><label for="task-name" class="block text-xs font-medium text-slate-300 mb-1">ชื่องาน</label> <input id="task-name" name="task-name" type="text" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="เช่น แบบฝึกหัดบทที่ 1">
+             </div>
+             <div class="grid grid-cols-2 gap-2">
+              <div><label for="task-max-score" class="block text-xs font-medium text-slate-300 mb-1">คะแนนเต็ม</label> <input id="task-max-score" name="task-max-score" type="number" min="0" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" value="10">
+              </div>
+              <div><label for="task-duedate" class="block text-xs font-medium text-slate-300 mb-1">วันกำหนดส่ง</label> <input id="task-duedate" name="task-duedate" type="date" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+             </div><button type="submit" class="w-full inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-slate-900"> เพิ่มงาน </button>
+            </form>
+            <div class="mt-1">
+             <p class="text-xs text-slate-400 mb-1">งานล่าสุด:</p>
+             <ul id="task-list" class="text-xs text-slate-300 space-y-0.5 max-h-32 overflow-auto"></ul>
+            </div>
+           </div>
+          </div>
+         </section><!-- SCAN SCORE PANEL -->
+         <section id="admin-panel-scan" class="hidden bg-slate-900/30 border border-slate-800 rounded-2xl p-4 md:p-5 flex flex-col gap-4">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+           <h3 id="scan-mode-title" class="text-lg font-semibold text-white">บันทึกคะแนน (Scan)</h3>
+           <p class="text-xs text-slate-300 md:text-right">เลือกวิชา ห้องเรียน งาน และคะแนนก่อน จากนั้นคลิกช่อง Scan แล้วสแกนบาร์โค้ดของนักเรียน</p>
+          </div>
+          <form id="scan-setup-form" class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+           <div><label for="scan-subject" class="block text-xs font-medium text-slate-300 mb-1">วิชา</label> <select id="scan-subject" name="scan-subject" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"> </select>
+           </div>
+           <div><label for="scan-class" class="block text-xs font-medium text-slate-300 mb-1">ห้องเรียน</label> <select id="scan-class" name="scan-class" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"> </select>
+           </div>
+           <div><label for="scan-task" class="block text-xs font-medium text-slate-300 mb-1">งาน</label> <select id="scan-task" name="scan-task" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"> </select>
+           </div>
+           <div><label for="scan-score" class="block text-xs font-medium text-slate-300 mb-1">คะแนนที่จะให้ (ต่อการส่ง 1 ครั้ง)</label> <input id="scan-score" name="scan-score" type="number" min="0" class="w-full rounded-lg border border-indigo-500/50 bg-slate-950/60 text-indigo-100 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" value="10">
+            <p class="text-[11px] text-slate-400 mt-1">ตัวอย่าง: ถ้านักเรียนส่งงานนี้ได้ 10 คะแนน ให้กรอก 10</p>
+           </div>
+          </form>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 items-start">
+           <div class="md:col-span-2"><label for="scan-input" class="block text-xs font-medium text-slate-300 mb-1">ช่อง Scan Barcode / รหัสนักเรียน</label> <input id="scan-input" name="scan-input" type="text" class="w-full rounded-xl border-2 border-indigo-500/50 bg-slate-950/80 text-indigo-100 px-4 py-3 text-base tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="คลิกที่นี่แล้วสแกนบาร์โค้ด...">
+            <p id="scan-status" class="mt-1 text-xs text-slate-400" aria-live="polite">รอการสแกน...</p>
+           </div>
+           <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-3 flex flex-col gap-2">
+            <h4 class="text-xs font-semibold text-white">ล่าสุด</h4>
+            <p id="scan-last-student" class="text-sm font-medium text-indigo-200">-</p>
+            <p id="scan-last-task" class="text-xs text-slate-300">งาน: -</p>
+            <p id="scan-last-score" class="text-xs text-slate-300">คะแนน: -</p>
+           </div>
+          </div>
+          <div>
+           <h4 class="text-sm font-semibold text-white mb-1">ประวัติการสแกนล่าสุด</h4>
+           <div class="bg-slate-800/30 border border-slate-700/50 rounded-xl max-h-40 overflow-auto">
+            <table class="min-w-full text-xs text-slate-300">
+             <thead class="bg-slate-900/80 text-[11px] text-slate-400">
+              <tr>
+               <th class="px-3 py-2 text-left">เวลา</th>
+               <th class="px-3 py-2 text-left">รหัส</th>
+               <th class="px-3 py-2 text-left">ชื่อ</th>
+               <th class="px-3 py-2 text-left">งาน</th>
+               <th class="px-3 py-2 text-right">คะแนน</th>
+              </tr>
+             </thead>
+             <tbody id="scan-history-body" class="divide-y divide-slate-800/30"></tbody>
+            </table>
+           </div>
+          </div>
+         </section><!-- NEW REPORT PANEL -->
+         <section id="admin-panel-report" class="hidden bg-slate-900/30 border border-slate-800 rounded-2xl p-4 md:p-5 flex flex-col gap-4">
+          <div class="flex items-center justify-between gap-2">
+           <h3 class="text-lg font-semibold text-white">รายงานผลและตรวจสอบข้อมูล</h3><button type="button" id="btn-export-csv" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-medium shadow focus:outline-none"> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg> Export CSV </button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-800/30 p-3 rounded-xl border border-slate-700/50">
+           <div><label for="report-class" class="block text-xs font-medium text-slate-300 mb-1">เลือกห้องเรียน (Class)</label> <select id="report-class" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+             <option value="">ทั้งหมด (All)</option>
+            </select>
+           </div>
+           <div><label for="report-subject" class="block text-xs font-medium text-slate-300 mb-1">เลือกวิชา (Subject)</label> <select id="report-subject" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+             <option value="">ทั้งหมด (All)</option>
+            </select>
+           </div>
+          </div>
+          <div class="bg-slate-800/30 border border-slate-700/50 rounded-xl overflow-hidden">
+           <div class="overflow-x-auto">
+            <table class="min-w-full text-xs text-slate-300">
+             <thead class="bg-slate-900/80 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+              <tr>
+               <th class="px-3 py-2 text-left">รหัส</th>
+               <th class="px-3 py-2 text-left">ชื่อ-นามสกุล</th>
+               <th class="px-3 py-2 text-left">ห้อง</th>
+               <th class="px-3 py-2 text-left">วิชา (ที่กรอง)</th>
+               <th class="px-3 py-2 text-right">คะแนนรวม</th>
+               <th class="px-3 py-2 text-center">งานที่ส่ง</th>
+              </tr>
+             </thead>
+             <tbody id="report-table-body" class="divide-y divide-slate-800/30">
+              <tr>
+               <td colspan="6" class="px-3 py-4 text-center text-slate-500 italic">กรุณาเลือกวิชาและห้องเรียนเพื่อดูข้อมูล</td>
+              </tr>
+             </tbody>
+            </table>
+           </div>
+          </div>
+         </section>
+        </div>
+       </div>
+      </section><!-- STUDENT PANEL -->
+      <section id="panel-student" class="hidden bg-slate-900/50 border border-slate-800 rounded-2xl p-4 md:p-6 flex flex-col gap-4"><!-- Student Login -->
+       <div id="student-login-section" class="flex flex-col gap-4">
+        <h2 id="student-login-title" class="text-xl font-semibold text-white text-center">เข้าสู่ระบบนักเรียน</h2><!-- Student Instructions Removed from here -->
+        <p class="text-slate-300 text-sm text-center">กรอกรหัสนักเรียนเพื่อดูผลการเรียนของคุณ</p>
+        <form id="student-login-form" class="space-y-4 max-w-sm mx-auto w-full mt-2">
+         <div class="flex flex-col gap-2">
+          <div><label for="student-login-id" class="block text-sm font-medium text-slate-300 mb-1">รหัสนักเรียน</label> <input id="student-login-id" name="student-login-id" type="text" class="w-full rounded-lg border border-slate-700 bg-slate-950/60 text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="พิมพ์หรือสแกนรหัสนักเรียน">
+          </div><button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-slate-900"> เข้าดูผลด้วยรหัส </button>
+         </div><!-- Google Login Section -->
+         <div class="relative flex py-2 items-center">
+          <div class="flex-grow border-t border-slate-800"></div><span class="flex-shrink-0 mx-4 text-slate-500 text-xs">หรือ</span>
+          <div class="flex-grow border-t border-slate-800"></div>
+         </div><button id="btn-google-login" type="button" class="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-slate-700 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out border border-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-900"><svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+           <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+           <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+          </svg> <span class="text-sm">เข้าสู่ระบบด้วย Google</span> </button>
+         <p id="student-login-error" class="text-xs text-red-300 bg-red-900/20 border border-red-500/30 rounded-lg px-3 py-2 hidden text-center">ไม่พบรหัสนักเรียนนี้ กรุณาตรวจสอบอีกครั้ง หรือสอบถามคุณครู</p>
+        </form>
+       </div><!-- Student Dashboard -->
+       <div id="student-dashboard-section" class="hidden flex flex-col gap-4">
+        <div class="flex items-center justify-between gap-2">
+         <div>
+          <h2 class="text-xl font-semibold text-indigo-300">สรุปสถานะงานของนักเรียน</h2>
+          <p id="student-dashboard-name" class="text-slate-300 text-sm mt-1"></p>
+         </div><button id="student-logout-button" type="button" class="text-xs md:text-sm px-3 py-1.5 rounded-lg border border-red-500/50 text-red-300 hover:bg-red-900/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-400 focus-visible:ring-offset-slate-900"> ออกจากระบบ </button>
+        </div><!-- Student Instructions (Moved here) -->
+        <div class="bg-slate-800/30 rounded-xl p-3 border border-slate-700/50">
+         <h3 class="font-semibold text-slate-300 text-sm mb-1 flex items-center gap-2"><svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg> คำแนะนำ:</h3>
+         <ul class="list-disc list-inside space-y-0.5 text-xs text-slate-400 ml-1">
+          <li>ดูสถานะงาน: <span class="font-semibold text-teal-300">สีเขียว = ส่งแล้ว</span>, <span class="font-semibold text-rose-300">สีแดง = ล่าช้า</span>, <span class="font-semibold text-amber-300">สีเหลือง = รอส่ง</span></li>
+          <li>กด “แก้ไขอีเมล” เพื่อบันทึกอีเมลสำหรับใช้กับ Google Login</li>
+         </ul>
+        </div>
+        <div class="bg-slate-900/30 border border-slate-800 rounded-2xl p-3 md:p-4 flex flex-col gap-3">
+         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div class="space-y-1">
+           <p class="text-xs text-slate-400">สถานะสี:</p>
+           <div class="flex flex-wrap items-center gap-2 text-[11px]"><span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-teal-900/30 border border-teal-500/50 text-teal-200"> <span class="w-2 h-2 rounded-full bg-teal-400"></span>ส่งแล้ว (มีคะแนน) </span> <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-rose-900/30 border border-rose-500/50 text-rose-200"> <span class="w-2 h-2 rounded-full bg-rose-400"></span>ล่าช้า (เลยกำหนดส่งและยังไม่มีคะแนน) </span> <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-900/30 border border-amber-500/50 text-amber-200"> <span class="w-2 h-2 rounded-full bg-amber-300"></span>รอส่ง (ยังไม่เลยกำหนด และยังไม่มีคะแนน) </span>
+           </div>
+          </div>
+          <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl px-3 py-2 text-xs text-slate-300 flex flex-col gap-1 max-w-xs">
+           <div class="flex items-center justify-between gap-2"><span>อีเมลสำหรับติดต่อ:</span> <button id="student-edit-email-button" type="button" class="px-2 py-0.5 rounded-md bg-slate-700 text-xs text-white hover:bg-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-slate-900"> แก้ไขอีเมล </button>
+           </div>
+           <form id="student-email-form" class="hidden mt-1 space-y-1"><label for="student-email-input" class="block text-[11px] text-slate-400">อีเมล</label>
+            <div class="flex gap-1"><input id="student-email-input" name="student-email-input" type="email" class="flex-1 rounded-md border border-slate-700 bg-slate-950/60 text-white px-2 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="example@mail.com"> <button type="submit" class="px-2 py-1 rounded-md bg-indigo-600 text-[11px] text-white font-semibold hover:bg-indigo-500"> บันทึก </button>
+            </div>
+           </form>
+           <p id="student-email-display" class="text-[11px] text-slate-400 italic">ยังไม่ได้บันทึกอีเมล</p>
+           <p id="student-email-status" class="text-[11px] text-teal-300 mt-0.5 hidden" aria-live="polite"></p>
+          </div>
+         </div>
+         <div class="bg-slate-800/30 border border-slate-700/50 rounded-xl max-h-64 overflow-auto mt-1">
+          <table class="min-w-full text-xs text-slate-300">
+           <thead class="bg-slate-900/80 text-[11px] text-slate-400">
+            <tr>
+             <th class="px-2 py-1 text-left">วิชา</th>
+             <th class="px-2 py-1 text-left">ห้อง</th>
+             <th class="px-2 py-1 text-left">งาน</th>
+             <th class="px-2 py-1 text-center">กำหนดส่ง</th>
+             <th class="px-2 py-1 text-right">คะแนน</th>
+             <th class="px-2 py-1 text-center">สถานะ</th>
+            </tr>
+           </thead>
+           <tbody id="student-task-body" class="divide-y divide-slate-800/30"></tbody>
+          </table>
+         </div>
+        </div>
+       </div>
+      </section>
+     </div>
+    </main>
+   </div>
+  </div>
+  <script>
+      // ---- CONFIG GOOGLE SHEET ---
+      // นำ URL Web App จาก Google Apps Script มาใส่ตรงนี้
+      const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQNjMSE06u5xO4dtyipa5P-YzoaicppubdwlUgMpaX4L4TUjk3-xY2PRnzhS42AxZe/exec"; 
+
+      // ---- CONFIG & EDITABLE FEATURES (Element SDK) ----
+      const defaultConfig = {
+        app_title: "ChineseClass Tracker",
+        admin_tab_label: "คุณครู (Admin)",
+        student_tab_label: "นักเรียน",
+        admin_login_title: "เข้าสู่ระบบคุณครู",
+        student_login_title: "เข้าสู่ระบบนักเรียน",
+        scan_mode_title: "บันทึกคะแนน (Scan)",
+        basic_data_title: "จัดการข้อมูลพื้นฐาน",
+        background_color: "#020617", // bg-slate-950
+        surface_color: "#0f172a", // bg-slate-900
+        text_color: "#cbd5e1", // text-slate-300
+        primary_action_color: "#4f46e5", // bg-indigo-600
+        secondary_action_color: "#1e293b", // bg-slate-800
+        font_family: "system-ui",
+        font_size: 14
+      };
+
+      function applyConfigToUI(config) {
+        const cfg = { ...defaultConfig, ...(config || {}) };
+        // ... (Styles logic remains same) ...
+        const root = document.getElementById("app-root");
+        if (root) root.style.backgroundColor = cfg.background_color;
+        const appWrapper = document.querySelector(".app-wrapper");
+        if (appWrapper) appWrapper.style.backgroundColor = cfg.surface_color;
+
+        const allTextEls = document.querySelectorAll("h1, h2, h3, h4, p, span, td, th, label, button, input, select");
+        const fontStack = cfg.font_family ? cfg.font_family + ", system-ui, sans-serif" : "system-ui, sans-serif";
+        const baseSize = cfg.font_size || 14;
+        allTextEls.forEach((el) => {
+          el.style.color = cfg.text_color;
+          el.style.fontFamily = fontStack;
+          const tag = el.tagName.toLowerCase();
+          let scale = 1;
+          if (tag === "h1") scale = 2;
+          else if (tag === "h2") scale = 1.6;
+          else if (tag === "h3") scale = 1.4;
+          else if (tag === "h4") scale = 1.2;
+          else if (tag === "button") scale = 1;
+          el.style.fontSize = baseSize * scale + "px";
+        });
+        
+        const googleBtnText = document.querySelectorAll("#btn-google-login span");
+        googleBtnText.forEach(el => el.style.color = "#334155"); // text-slate-700
+
+        // UI Text updates
+        if(document.getElementById("app-title")) document.getElementById("app-title").textContent = cfg.app_title;
+        if(document.getElementById("tab-admin")) document.getElementById("tab-admin").textContent = cfg.admin_tab_label;
+        if(document.getElementById("tab-student")) document.getElementById("tab-student").textContent = cfg.student_tab_label;
+        if(document.getElementById("admin-login-title")) document.getElementById("admin-login-title").textContent = cfg.admin_login_title;
+        if(document.getElementById("student-login-title")) document.getElementById("student-login-title").textContent = cfg.student_login_title;
+        if(document.getElementById("scan-mode-title")) document.getElementById("scan-mode-title").textContent = cfg.scan_mode_title;
+        if(document.getElementById("basic-data-title")) document.getElementById("basic-data-title").textContent = cfg.basic_data_title;
+
+        // Button Colors
+        const primaryButtons = document.querySelectorAll("button.bg-indigo-600, button.bg-indigo-600:hover");
+        primaryButtons.forEach((btn) => {
+          btn.style.backgroundColor = cfg.primary_action_color;
+          btn.addEventListener("mouseenter", () => btn.style.filter = "brightness(1.1)");
+          btn.addEventListener("mouseleave", () => btn.style.filter = "brightness(1)");
+        });
+
+        const secondaryButtons = document.querySelectorAll("#tab-admin, #tab-student, #admin-tab-basic, #admin-tab-scan, #admin-tab-report");
+        secondaryButtons.forEach((btn) => {
+          btn.style.borderColor = cfg.secondary_action_color;
+          if (btn.classList.contains('bg-slate-800')) {
+              btn.style.backgroundColor = cfg.secondary_action_color;
+          }
+        });
+      }
+
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => { applyConfigToUI(config); },
+          mapToCapabilities: (config) => {
+            // ... (Mapping logic remains same) ...
+             const cfg = window.elementSdk ? window.elementSdk.config : defaultConfig;
+             return {
+                recolorables: [
+                    { get: () => (cfg && cfg.background_color) || defaultConfig.background_color, set: (v) => window.elementSdk.setConfig({ background_color: v }) },
+                    { get: () => (cfg && cfg.surface_color) || defaultConfig.surface_color, set: (v) => window.elementSdk.setConfig({ surface_color: v }) },
+                    { get: () => (cfg && cfg.text_color) || defaultConfig.text_color, set: (v) => window.elementSdk.setConfig({ text_color: v }) },
+                    { get: () => (cfg && cfg.primary_action_color) || defaultConfig.primary_action_color, set: (v) => window.elementSdk.setConfig({ primary_action_color: v }) },
+                    { get: () => (cfg && cfg.secondary_action_color) || defaultConfig.secondary_action_color, set: (v) => window.elementSdk.setConfig({ secondary_action_color: v }) }
+                ],
+                fontSizeable: { get: () => (cfg && cfg.font_size) || defaultConfig.font_size, set: (v) => window.elementSdk.setConfig({ font_size: v }) },
+                fontEditable: { get: () => (cfg && cfg.font_family) || defaultConfig.font_family, set: (v) => window.elementSdk.setConfig({ font_family: v }) }
+             };
+          },
+          mapToEditPanelValues: (config) => {
+             const cfg = config || {};
+             return new Map([
+               ["app_title", cfg.app_title || defaultConfig.app_title],
+               ["admin_tab_label", cfg.admin_tab_label || defaultConfig.admin_tab_label],
+               ["student_tab_label", cfg.student_tab_label || defaultConfig.student_tab_label],
+               ["admin_login_title", cfg.admin_login_title || defaultConfig.admin_login_title],
+               ["student_login_title", cfg.student_login_title || defaultConfig.student_login_title],
+               ["scan_mode_title", cfg.scan_mode_title || defaultConfig.scan_mode_title],
+               ["basic_data_title", cfg.basic_data_title || defaultConfig.basic_data_title]
+             ]);
+          }
+        });
+      } else {
+        applyConfigToUI(defaultConfig);
+      }
+
+      // ---- APP STATE (Mixed: Local + Async capability) ----
+      let isAdminLoggedIn = false;
+      const adminUser = "admin";
+      const adminPass = "admin290936";
+
+      let subjectIdCounter = 1;
+      let classIdCounter = 1;
+      let studentIdCounter = 1;
+      let taskIdCounter = 1;
+
+      // Make these let so we can override with fetched data
+      let subjects = [];
+      let classes = [];
+      let students = [];
+      let tasks = [];
+      let scores = [];
+
+      let currentStudentId = null;
+
+      // ---- DATA SYNC FUNCTIONS ----
+      async function syncData() {
+        if (!GOOGLE_SCRIPT_URL) {
+            console.log("No Google Script URL provided. Using local mode.");
+            return; 
+        }
+
+        const indicator = document.getElementById('db-status-indicator');
+        if(indicator) {
+             indicator.textContent = "⏳ กำลังโหลดข้อมูลจาก Google Sheet...";
+             indicator.classList.remove('text-amber-300', 'text-rose-400');
+             indicator.classList.add('text-indigo-300');
+        }
+
+        try {
+            const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData`);
+            const data = await response.json();
+            
+            if(data) {
+                subjects = data.subjects || [];
+                classes = data.classes || [];
+                students = data.students || [];
+                tasks = data.tasks || [];
+                scores = data.scores || [];
+                
+                // Reset counters to max ID found + 1 to avoid collision
+                if(subjects.length) subjectIdCounter = Math.max(...subjects.map(s => s.id)) + 1;
+                if(classes.length) classIdCounter = Math.max(...classes.map(c => c.id)) + 1;
+                if(students.length) studentIdCounter = Math.max(...students.map(s => s.id)) + 1;
+                if(tasks.length) taskIdCounter = Math.max(...tasks.map(t => t.id)) + 1;
+
+                if(indicator) {
+                    indicator.textContent = "✅ เชื่อมต่อ Google Sheet สำเร็จ";
+                    indicator.classList.remove('text-indigo-300');
+                    indicator.classList.add('text-teal-400');
+                }
+                
+                // Refresh UI
+                refreshSubjectOptions();
+                refreshClassOptions();
+                refreshTaskOptions();
+                refreshStudentList();
+                refreshReportOptions();
+                if(!document.getElementById("admin-panel-report").classList.contains("hidden")) {
+                    renderReportTable(); // Auto refresh report if open
+                }
+            }
+        } catch (e) {
+            console.error("Failed to fetch data", e);
+            if(indicator) {
+                indicator.textContent = "❌ เชื่อมต่อล้มเหลว (ใช้ข้อมูลจำลอง)";
+                indicator.classList.remove('text-indigo-300');
+                indicator.classList.add('text-rose-400');
+            }
+        }
+      }
+
+      async function saveDataToSheet(action, payload) {
+        if (!GOOGLE_SCRIPT_URL) return; // Do nothing if no URL
+        
+        try {
+            // Using no-cors mode is tricky with custom data, standard POST usually works with Web App if permissions are correct
+            // For simple demo, we use standard POST text/plain to avoid preflight issues sometimes
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action, ...payload })
+            });
+        } catch(e) {
+            console.error("Save failed", e);
+        }
+      }
+
+      // ---- HELPERS ----
+      function formatTime(date) {
+        return (
+          String(date.getHours()).padStart(2, "0") +
+          ":" +
+          String(date.getMinutes()).padStart(2, "0") +
+          ":" +
+          String(date.getSeconds()).padStart(2, "0")
+        );
+      }
+
+      function getSubjectName(subjectId) {
+        const s = subjects.find((x) => Number(x.id) === Number(subjectId));
+        return s ? s.name : "-";
+      }
+
+      function getClassName(classId) {
+        const c = classes.find((x) => Number(x.id) === Number(classId));
+        return c ? c.name : "-";
+      }
+
+      function getStudentByCode(code) {
+        return students.find((s) => String(s.code) === String(code));
+      }
+
+      function getStudentById(id) {
+        return students.find((s) => Number(s.id) === Number(id));
+      }
+      
+      function getStudentByEmail(email) {
+          return students.find(s => s.email === email);
+      }
+
+      function getTaskById(id) {
+        return tasks.find((t) => Number(t.id) === Number(id));
+      }
+
+      function getScore(studentId, taskId) {
+        return scores.find(
+          (s) => Number(s.studentId) === Number(studentId) && Number(s.taskId) === Number(taskId)
+        );
+      }
+
+      function compareDateOnly(a, b) {
+        const da = new Date(a);
+        const db = new Date(b);
+        da.setHours(0, 0, 0, 0);
+        db.setHours(0, 0, 0, 0);
+        if (da.getTime() < db.getTime()) return -1;
+        if (da.getTime() > db.getTime()) return 1;
+        return 0;
+      }
+
+      // ---- DOM ELEMENTS & LOGIC ----
+      const tabAdmin = document.getElementById("tab-admin");
+      const tabStudent = document.getElementById("tab-student");
+      const panelAdmin = document.getElementById("panel-admin");
+      const panelStudent = document.getElementById("panel-student");
+
+      function switchMainTab(target) {
+        if (target === "admin") {
+          panelAdmin.classList.remove("hidden");
+          panelStudent.classList.add("hidden");
+          tabAdmin.classList.add("bg-indigo-600", "shadow-md");
+          tabStudent.classList.remove("bg-indigo-600", "shadow-md");
+          tabStudent.classList.add("text-slate-300");
+          tabAdmin.classList.remove("text-slate-300");
+
+        } else {
+          panelStudent.classList.remove("hidden");
+          panelAdmin.classList.add("hidden");
+          tabStudent.classList.add("bg-indigo-600", "shadow-md");
+          tabAdmin.classList.remove("bg-indigo-600", "shadow-md");
+          tabAdmin.classList.add("text-slate-300");
+          tabStudent.classList.remove("text-slate-300");
+        }
+      }
+
+      tabAdmin.addEventListener("click", () => switchMainTab("admin"));
+      tabStudent.addEventListener("click", () => switchMainTab("student"));
+
+      // ---- Admin Login ----
+      const adminLoginSection = document.getElementById("admin-login-section");
+      const adminContentSection = document.getElementById("admin-content-section");
+      const adminLoginForm = document.getElementById("admin-login-form");
+      const adminLoginError = document.getElementById("admin-login-error");
+      const adminLoginStatus = document.getElementById("admin-login-status");
+      const adminLogoutButton = document.getElementById("admin-logout-button");
+
+      function updateAdminUI() {
+        if (isAdminLoggedIn) {
+          adminLoginSection.classList.add("hidden");
+          adminContentSection.classList.remove("hidden");
+          adminLoginError.classList.add("hidden");
+          adminLoginStatus.textContent = "";
+          // Trigger Sync when admin logs in
+          syncData(); 
+        } else {
+          adminLoginSection.classList.remove("hidden");
+          adminContentSection.classList.add("hidden");
+        }
+      }
+
+      adminLoginForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const username = document.getElementById("admin-username").value.trim();
+        const password = document.getElementById("admin-password").value.trim();
+        if (username === adminUser && password === adminPass) {
+          isAdminLoggedIn = true;
+          adminLoginError.classList.add("hidden");
+          adminLoginStatus.textContent = "เข้าสู่ระบบสำเร็จ";
+          updateAdminUI();
+        } else {
+          isAdminLoggedIn = false;
+          adminLoginError.classList.remove("hidden");
+          adminLoginStatus.textContent = "";
+        }
+      });
+
+      adminLogoutButton.addEventListener("click", () => {
+        isAdminLoggedIn = false;
+        updateAdminUI();
+      });
+
+      updateAdminUI();
+
+      // ---- Admin Sub-tabs ----
+      const adminTabBasic = document.getElementById("admin-tab-basic");
+      const adminTabScan = document.getElementById("admin-tab-scan");
+      const adminTabReport = document.getElementById("admin-tab-report");
+      const adminPanelBasic = document.getElementById("admin-panel-basic");
+      const adminPanelScan = document.getElementById("admin-panel-scan");
+      const adminPanelReport = document.getElementById("admin-panel-report");
+
+      function switchAdminTab(target) {
+        adminTabBasic.classList.remove("bg-slate-800", "shadow-sm", "text-white");
+        adminTabScan.classList.remove("bg-slate-800", "shadow-sm", "text-white");
+        adminTabReport.classList.remove("bg-slate-800", "shadow-sm", "text-white");
+        adminTabBasic.classList.add("text-slate-300");
+        adminTabScan.classList.add("text-slate-300");
+        adminTabReport.classList.add("text-slate-300");
+
+        adminPanelBasic.classList.add("hidden");
+        adminPanelScan.classList.add("hidden");
+        adminPanelReport.classList.add("hidden");
+
+        if (target === "basic") {
+          adminPanelBasic.classList.remove("hidden");
+          adminTabBasic.classList.add("bg-slate-800", "shadow-sm", "text-white");
+          adminTabBasic.classList.remove("text-slate-300");
+        } else if (target === "scan") {
+          adminPanelScan.classList.remove("hidden");
+          adminTabScan.classList.add("bg-slate-800", "shadow-sm", "text-white");
+          adminTabScan.classList.remove("text-slate-300");
+        } else if (target === "report") {
+          adminPanelReport.classList.remove("hidden");
+          adminTabReport.classList.add("bg-slate-800", "shadow-sm", "text-white");
+          adminTabReport.classList.remove("text-slate-300");
+          refreshReportOptions();
+          renderReportTable();
+        }
+      }
+
+      adminTabBasic.addEventListener("click", () => switchAdminTab("basic"));
+      adminTabScan.addEventListener("click", () => switchAdminTab("scan"));
+      adminTabReport.addEventListener("click", () => switchAdminTab("report"));
+      switchAdminTab("basic");
+
+      // ---- Basic Data Forms ----
+      const subjectList = document.getElementById("subject-list");
+      const classList = document.getElementById("class-list");
+      const studentList = document.getElementById("student-list");
+      const taskList = document.getElementById("task-list");
+      // Selectors
+      const selectClassSubject = document.getElementById("class-subject");
+      const selectStudentClass = document.getElementById("student-class");
+      const selectTaskSubject = document.getElementById("task-subject");
+      const selectTaskClass = document.getElementById("task-class");
+      const selectScanSubject = document.getElementById("scan-subject");
+      const selectScanClass = document.getElementById("scan-class");
+      const selectScanTask = document.getElementById("scan-task");
+      // Report Selectors
+      const selectReportSubject = document.getElementById("report-subject");
+      const selectReportClass = document.getElementById("report-class");
+      const reportTableBody = document.getElementById("report-table-body");
+      const btnExportCSV = document.getElementById("btn-export-csv");
+
+      function refreshSubjectOptions() {
+        const selects = [selectClassSubject, selectTaskSubject, selectScanSubject, selectReportSubject];
+        selects.forEach((sel) => {
+          if (!sel) return; // Guard clause
+          
+          // Preserve 'All' option for report if exists
+          const hasAll = sel.id === "report-subject";
+          sel.innerHTML = hasAll ? '<option value="">ทั้งหมด (All)</option>' : '';
+          
+          if (!hasAll) {
+             const opt = document.createElement("option");
+             opt.value = "";
+             opt.textContent = subjects.length ? "เลือกวิชา" : "ยังไม่มีวิชา";
+             sel.appendChild(opt);
+          }
+
+          subjects.forEach((s) => {
+            const o = document.createElement("option");
+            o.value = String(s.id);
+            o.textContent = s.name;
+            sel.appendChild(o);
+          });
+        });
+        subjectList.innerHTML = "";
+        subjects.forEach((s) => {
+          const li = document.createElement("li");
+          li.textContent = `• ${s.name}`;
+          subjectList.appendChild(li);
+        });
+      }
+
+      function refreshClassOptions() {
+        const allClassesSel = [selectStudentClass, selectTaskClass, selectScanClass, selectReportClass];
+        allClassesSel.forEach((sel) => {
+          if (!sel) return;
+
+          // Preserve 'All' option for report if exists
+          const hasAll = sel.id === "report-class";
+          sel.innerHTML = hasAll ? '<option value="">ทั้งหมด (All)</option>' : '';
+
+          if(!hasAll) {
+            const opt = document.createElement("option");
+            opt.value = "";
+            opt.textContent = classes.length ? "เลือกห้องเรียน" : "ยังไม่มีห้องเรียน";
+            sel.appendChild(opt);
+          }
+
+          classes.forEach((c) => {
+            const o = document.createElement("option");
+            o.value = String(c.id);
+            // Class is now standalone, just show name
+            o.textContent = `${c.name}`;
+            sel.appendChild(o);
+          });
+        });
+        classList.innerHTML = "";
+        classes.forEach((c) => {
+          const li = document.createElement("li");
+          li.textContent = `• ${c.name}`;
+          classList.appendChild(li);
+        });
+      }
+
+      function refreshTaskOptions() {
+        const selectedSubjectId = Number(selectScanSubject.value || 0);
+        const selectedClassId = Number(selectScanClass.value || 0);
+        selectScanTask.innerHTML = "";
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = tasks.length ? "เลือกงาน" : "ยังไม่มีงาน";
+        selectScanTask.appendChild(opt);
+
+        tasks.forEach((t) => {
+          if ( (!selectedSubjectId || t.subjectId == selectedSubjectId) && (!selectedClassId || t.classId == selectedClassId) ) {
+            const o = document.createElement("option");
+            o.value = String(t.id);
+            o.textContent = `${t.name} (${getClassName(t.classId)})`;
+            selectScanTask.appendChild(o);
+          }
+        });
+        taskList.innerHTML = "";
+        tasks.slice(-10).forEach((t) => {
+          const li = document.createElement("li");
+          li.textContent = `• ${t.name} [${getSubjectName(t.subjectId)} / ${getClassName(t.classId)}] คะแนนเต็ม ${t.maxScore}`;
+          taskList.appendChild(li);
+        });
+      }
+
+      function refreshStudentList() {
+        studentList.innerHTML = "";
+        students.slice(-10).forEach((s) => {
+          const li = document.createElement("li");
+          li.textContent = `• ${s.code} - ${s.name} (${getClassName(s.classId)})`;
+          studentList.appendChild(li);
+        });
+      }
+
+      // Add Subject
+      document.getElementById("form-subject").addEventListener("submit", (e) => {
+          e.preventDefault();
+          const name = document.getElementById("subject-name").value.trim();
+          if (!name) return;
+          const newObj = { id: subjectIdCounter++, name };
+          subjects.push(newObj);
+          saveDataToSheet('addSubject', newObj); // Async save
+          document.getElementById("subject-name").value = "";
+          refreshSubjectOptions();
+      });
+
+      // Add Class
+      document.getElementById("form-class").addEventListener("submit", (e) => {
+        e.preventDefault();
+        // Class no longer needs subjectId
+        const name = document.getElementById("class-name").value.trim();
+        if (!name) return;
+        
+        // Pass 0 or empty for subjectId as it is decoupled now
+        const newObj = { id: classIdCounter++, name, subjectId: 0 };
+        classes.push(newObj);
+        saveDataToSheet('addClass', newObj);
+        document.getElementById("class-name").value = "";
+        refreshClassOptions();
+      });
+
+      // Add Student
+      document.getElementById("form-student").addEventListener("submit", (e) => {
+          e.preventDefault();
+          const classId = Number(document.getElementById("student-class").value || 0);
+          const code = document.getElementById("student-id").value.trim();
+          const name = document.getElementById("student-name").value.trim();
+          if (!classId || !code || !name) return;
+          const newObj = { id: studentIdCounter++, code, name, classId, email: "" };
+          students.push(newObj);
+          saveDataToSheet('addStudent', newObj);
+          document.getElementById("student-id").value = "";
+          document.getElementById("student-name").value = "";
+          refreshStudentList();
+        });
+
+      // Add Task
+      document.getElementById("form-task").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const subjectId = Number(document.getElementById("task-subject").value || 0);
+        const classId = Number(document.getElementById("task-class").value || 0);
+        const name = document.getElementById("task-name").value.trim();
+        const maxScore = Number(document.getElementById("task-max-score").value || 0);
+        const dueDate = document.getElementById("task-duedate").value;
+        if (!subjectId || !classId || !name) return;
+        const newObj = { id: taskIdCounter++, name, subjectId, classId, maxScore, dueDateISO: dueDate || "" };
+        tasks.push(newObj);
+        saveDataToSheet('addTask', newObj);
+        document.getElementById("task-name").value = "";
+        refreshTaskOptions();
+      });
+
+      selectScanSubject.addEventListener("change", refreshTaskOptions);
+      selectScanClass.addEventListener("change", refreshTaskOptions);
+
+      // ---- REPORT LOGIC ----
+      function refreshReportOptions() {
+          // This ensures the dropdowns are populated when the tab is clicked,
+          // reusing the global refresh functions which now handle 'report-subject' and 'report-class' IDs
+          refreshSubjectOptions();
+          refreshClassOptions();
+      }
+
+      function renderReportTable() {
+          const subId = Number(selectReportSubject.value || 0);
+          const clsId = Number(selectReportClass.value || 0);
+          
+          reportTableBody.innerHTML = "";
+
+          // Filter students based on CLASS selection only (Students belong to class)
+          // We don't filter students by subject directly anymore, as class is generic
+          let filteredStudents = students.filter(s => {
+              const matchClass = clsId === 0 || Number(s.classId) === clsId;
+              return matchClass;
+          });
+
+          if (filteredStudents.length === 0) {
+              reportTableBody.innerHTML = `<tr><td colspan="6" class="px-3 py-4 text-center text-slate-500 italic">ไม่พบข้อมูลนักเรียนตามเงื่อนไข</td></tr>`;
+              return;
+          }
+
+          filteredStudents.forEach(stu => {
+              const cls = classes.find(c => Number(c.id) === Number(stu.classId));
+              
+              // Calculate scores - Filter tasks by Subject if selected
+              const relatedTasks = tasks.filter(t => {
+                  const isClassMatch = Number(t.classId) === Number(stu.classId);
+                  const isSubjectMatch = subId === 0 || Number(t.subjectId) === subId;
+                  return isClassMatch && isSubjectMatch;
+              });
+
+              let totalScore = 0;
+              let submittedCount = 0;
+              
+              relatedTasks.forEach(t => {
+                  const sc = getScore(stu.id, t.id);
+                  if (sc) {
+                      totalScore += Number(sc.score);
+                      submittedCount++;
+                  }
+              });
+              
+              // Determine what to show in Subject Column
+              let subjectDisplay = "-";
+              if (subId !== 0) {
+                  subjectDisplay = getSubjectName(subId);
+              } else if (relatedTasks.length > 0) {
+                  subjectDisplay = "รวมทุกวิชา";
+              }
+
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                  <td class="px-3 py-2 text-indigo-200 font-mono">${stu.code}</td>
+                  <td class="px-3 py-2 text-slate-300">${stu.name}</td>
+                  <td class="px-3 py-2 text-slate-400">${cls ? cls.name : "-"}</td>
+                  <td class="px-3 py-2 text-slate-400">${subjectDisplay}</td>
+                  <td class="px-3 py-2 text-right font-semibold text-teal-300">${totalScore}</td>
+                  <td class="px-3 py-2 text-center text-slate-400">${submittedCount} / ${relatedTasks.length}</td>
+              `;
+              reportTableBody.appendChild(tr);
+          });
+      }
+
+      function downloadCSV() {
+          const subId = Number(selectReportSubject.value || 0);
+          const clsId = Number(selectReportClass.value || 0);
+          
+          let csvContent = "\uFEFF"; // UTF-8 BOM
+          csvContent += "Student ID,Name,Class,Subject Filter,Total Score,Tasks Submitted,Total Tasks\n";
+
+          let filteredStudents = students.filter(s => {
+              const matchClass = clsId === 0 || Number(s.classId) === clsId;
+              return matchClass;
+          });
+
+          filteredStudents.forEach(stu => {
+              const cls = classes.find(c => Number(c.id) === Number(stu.classId));
+              
+              const relatedTasks = tasks.filter(t => {
+                  const isClassMatch = Number(t.classId) === Number(stu.classId);
+                  const isSubjectMatch = subId === 0 || Number(t.subjectId) === subId;
+                  return isClassMatch && isSubjectMatch;
+              });
+              
+              let totalScore = 0;
+              let submittedCount = 0;
+              relatedTasks.forEach(t => {
+                  const sc = getScore(stu.id, t.id);
+                  if (sc) {
+                      totalScore += Number(sc.score);
+                      submittedCount++;
+                  }
+              });
+
+              let subjectDisplay = subId !== 0 ? getSubjectName(subId) : "All Subjects";
+
+              const row = [
+                  `"${stu.code}"`,
+                  `"${stu.name}"`,
+                  `"${cls ? cls.name : ""}"`,
+                  `"${subjectDisplay}"`,
+                  totalScore,
+                  submittedCount,
+                  relatedTasks.length
+              ];
+              csvContent += row.join(",") + "\n";
+          });
+
+          const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.setAttribute("href", url);
+          link.setAttribute("download", `chineseclass_report_${new Date().toISOString().slice(0,10)}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+      }
+
+      selectReportSubject.addEventListener("change", renderReportTable);
+      selectReportClass.addEventListener("change", renderReportTable);
+      btnExportCSV.addEventListener("click", downloadCSV);
+
+
+      // ---- Scan Score ----
+      const scanInput = document.getElementById("scan-input");
+      const scanScoreInput = document.getElementById("scan-score");
+      const scanStatus = document.getElementById("scan-status");
+      const scanLastStudent = document.getElementById("scan-last-student");
+      const scanLastTask = document.getElementById("scan-last-task");
+      const scanLastScore = document.getElementById("scan-last-score");
+      const scanHistoryBody = document.getElementById("scan-history-body");
+
+      scanInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const code = scanInput.value.trim();
+          const student = getStudentByCode(code);
+          const taskId = Number(selectScanTask.value || 0);
+          const scoreValue = Number(scanScoreInput.value || 0);
+          const task = getTaskById(taskId);
+          if (!code || !student || !task) {
+            scanStatus.textContent = "การสแกนไม่สำเร็จ: ตรวจสอบข้อมูล";
+            return;
+          }
+
+          const existing = getScore(student.id, taskId);
+          const now = new Date();
+          const newObj = { studentId: student.id, taskId, score: scoreValue, timestampISO: now.toISOString() };
+          
+          if (existing) {
+            existing.score = scoreValue;
+            existing.timestampISO = now.toISOString();
+             // Note: Update logic for existing score in Sheet is harder without a unique ScoreID, simplified here to just append logic for now
+             saveDataToSheet('addScore', newObj); 
+          } else {
+            scores.push(newObj);
+            saveDataToSheet('addScore', newObj);
+          }
+
+          scanLastStudent.textContent = `${student.code} - ${student.name}`;
+          scanLastTask.textContent = `งาน: ${task.name}`;
+          scanLastScore.textContent = `คะแนน: ${scoreValue} / ${task.maxScore}`;
+          scanStatus.textContent = "บันทึกคะแนนแล้ว";
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="px-2 py-1 text-[11px]">${formatTime(now)}</td>
+            <td class="px-2 py-1 text-[11px]">${student.code}</td>
+            <td class="px-2 py-1 text-[11px]">${student.name}</td>
+            <td class="px-2 py-1 text-[11px]">${task.name}</td>
+            <td class="px-2 py-1 text-[11px] text-right">${scoreValue}</td>
+          `;
+          scanHistoryBody.insertBefore(tr, scanHistoryBody.firstChild);
+          scanInput.value = "";
+        }
+      });
+
+      // ---- Student Logic ----
+      const studentLoginForm = document.getElementById("student-login-form");
+      const studentLoginError = document.getElementById("student-login-error");
+      const studentLoginSection = document.getElementById("student-login-section");
+      const studentDashboardSection = document.getElementById("student-dashboard-section");
+      const studentDashboardName = document.getElementById("student-dashboard-name");
+      const studentTaskBody = document.getElementById("student-task-body");
+      const studentLogoutButton = document.getElementById("student-logout-button");
+      const studentEditEmailButton = document.getElementById("student-edit-email-button");
+      const studentEmailForm = document.getElementById("student-email-form");
+      const studentEmailInput = document.getElementById("student-email-input");
+      const studentEmailDisplay = document.getElementById("student-email-display");
+      const studentEmailStatus = document.getElementById("student-email-status");
+      const btnGoogleLogin = document.getElementById("btn-google-login");
+
+      function updateStudentDashboard() {
+        if (!currentStudentId) return;
+        const stu = getStudentById(currentStudentId);
+        if (!stu) return;
+
+        studentDashboardName.textContent = `${stu.code} - ${stu.name} (${getClassName(stu.classId)})`;
+
+        studentTaskBody.innerHTML = "";
+        const relatedTasks = tasks.filter((t) => Number(t.classId) === Number(stu.classId));
+        const todayISO = new Date().toISOString().split("T")[0];
+
+        relatedTasks.forEach((t) => {
+          const score = getScore(stu.id, t.id);
+          let statusText = "รอส่ง";
+          let statusColor = "inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-amber-900/30 border border-amber-500/50 text-amber-200 text-[11px]";
+          const due = t.dueDateISO || "";
+
+          if (score) {
+            statusText = "ส่งแล้ว";
+            statusColor = "inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-teal-900/30 border border-teal-500/50 text-teal-200 text-[11px]";
+          } else if (due && compareDateOnly(due, todayISO) < 0) {
+            statusText = "ล่าช้า";
+            statusColor = "inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-rose-900/30 border border-rose-500/50 text-rose-200 text-[11px]";
+          }
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="px-2 py-1 text-[11px]">${getSubjectName(t.subjectId)}</td>
+            <td class="px-2 py-1 text-[11px]">${getClassName(t.classId)}</td>
+            <td class="px-2 py-1 text-[11px]">${t.name}</td>
+            <td class="px-2 py-1 text-[11px] text-center">${t.dueDateISO || "-"}</td>
+            <td class="px-2 py-1 text-[11px] text-right">${score ? `${score.score} / ${t.maxScore}` : "-"}</td>
+            <td class="px-2 py-1 text-[11px] text-center">
+              <span class="${statusColor}">${statusText}</span>
+            </td>
+          `;
+          studentTaskBody.appendChild(tr);
+        });
+
+        if (stu.email) {
+          studentEmailDisplay.textContent = `อีเมลที่บันทึกไว้: ${stu.email} (ใช้สำหรับการจำลองการแจ้งเตือน)`;
+        } else {
+          studentEmailDisplay.textContent = "ยังไม่ได้บันทึกอีเมล";
+        }
+      }
+
+      function switchStudentMode(loggedIn) {
+        if (loggedIn) {
+          studentLoginSection.classList.add("hidden");
+          studentDashboardSection.classList.remove("hidden");
+          studentLoginError.classList.add("hidden");
+          updateStudentDashboard();
+          // Sync data for student view as well
+          syncData();
+        } else {
+          currentStudentId = null;
+          studentLoginSection.classList.remove("hidden");
+          studentDashboardSection.classList.add("hidden");
+        }
+      }
+
+      studentLoginForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const code = document.getElementById("student-login-id").value.trim();
+        // Try local find first, assuming data is synced
+        const stu = getStudentByCode(code);
+        if (!stu) {
+          studentLoginError.textContent = "ไม่พบรหัสนักเรียนนี้ (หากเพิ่งเพิ่มข้อมูล กรุณารอสักครู่แล้วลองใหม่)";
+          studentLoginError.classList.remove("hidden");
+          return;
+        }
+        studentLoginError.classList.add("hidden");
+        currentStudentId = stu.id;
+        switchStudentMode(true);
+        document.getElementById("student-login-id").value = "";
+      });
+
+      // Mock Google Login
+      btnGoogleLogin.addEventListener("click", () => {
+          const originalText = btnGoogleLogin.innerHTML;
+          btnGoogleLogin.innerHTML = `<span class="text-sm">กำลังเชื่อมต่อ Google...</span>`;
+          btnGoogleLogin.disabled = true;
+          setTimeout(() => {
+              const mockEmail = "demo@gmail.com"; 
+              const stu = getStudentByEmail(mockEmail);
+              if (stu) {
+                  currentStudentId = stu.id;
+                  switchStudentMode(true);
+                  studentLoginError.classList.add("hidden");
+              } else {
+                  studentLoginError.textContent = `ไม่พบข้อมูลนักเรียนที่ใช้อีเมล ${mockEmail} กรุณาเข้าสู่ระบบด้วยรหัส และบันทึกอีเมลก่อน`;
+                  studentLoginError.classList.remove("hidden");
+              }
+              btnGoogleLogin.innerHTML = originalText;
+              btnGoogleLogin.disabled = false;
+          }, 1500);
+      });
+
+      studentLogoutButton.addEventListener("click", () => switchStudentMode(false));
+
+      studentEditEmailButton.addEventListener("click", () => {
+        if (!currentStudentId) return;
+        const stu = getStudentById(currentStudentId);
+        studentEmailForm.classList.toggle("hidden");
+        if (!studentEmailForm.classList.contains("hidden")) studentEmailInput.value = stu.email || "";
+      });
+
+      studentEmailForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (!currentStudentId) return;
+        const stu = getStudentById(currentStudentId);
+        const email = studentEmailInput.value.trim();
+        stu.email = email; // Update local
+        // Note: Ideally sending an update to Sheet would require a specific 'updateStudent' action, 
+        // For now this only updates local state in this demo scope.
+        studentEmailForm.classList.add("hidden");
+        studentEmailStatus.classList.remove("hidden");
+        studentEmailStatus.textContent = "บันทึกอีเมลเรียบร้อยแล้ว (จำลอง)";
+        setTimeout(() => studentEmailStatus.classList.add("hidden"), 3000);
+        updateStudentDashboard();
+      });
+
+      // Initial local refresh
+      refreshSubjectOptions();
+      refreshClassOptions();
+      refreshTaskOptions();
+      refreshStudentList();
+    </script>
+ </body>
+</html>
