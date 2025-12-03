@@ -1111,7 +1111,7 @@
           btnGoogleLogin.innerHTML = `<span class="text-sm">กำลังเชื่อมต่อ Google...</span>`;
           btnGoogleLogin.disabled = true;
           setTimeout(() => {
-              const mockEmail = "demo@gmail.com"; 
+              const mockEmail = "@gmail.com"; 
               const stu = getStudentByEmail(mockEmail);
               if (stu) {
                   currentStudentId = stu.id;
