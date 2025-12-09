@@ -2,8 +2,7 @@
 <html lang="th">
  <head>
   <meta charset="UTF-8">
-  <title>ChineseClass System V7.4</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChineseClass System V7.5 (Update UI)</title> <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -23,6 +22,10 @@
 
       #toast-notification { transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s; }
       .toast-show { transform: translate(-50%, 0) !important; opacity: 1 !important; }
+
+      /* Animation for Search Result */
+      .fade-in { animation: fadeIn 0.3s ease-in-out; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
  </head>
  <body class="w-full h-full bg-slate-950 text-slate-200">
@@ -95,12 +98,21 @@
                      <h4 class="text-sm font-semibold text-white mb-3">3. สร้าง/แก้ไขงาน</h4>
                      <form id="form-task" class="space-y-3">
                          <div class="grid grid-cols-2 gap-3">
-                             <select id="task-class" class="bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white"></select>
-                             <select id="task-category" class="bg-slate-900 border border-amber-500 rounded px-2 py-2 text-xs text-amber-500 font-bold">
-                                 <option value="accum">คะแนนเก็บ (60)</option><option value="midterm">กลางภาค (20)</option><option value="final">ปลายภาค (30)</option><option value="special">พิเศษ (5)</option>
-                             </select>
+                             <div>
+                                <label class="text-[10px] text-slate-400">เลือกห้อง (Auto วิชา)</label>
+                                <select id="task-class" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white"></select>
+                             </div>
+                             <div>
+                                <label class="text-[10px] text-slate-400">ประเภท</label>
+                                <select id="task-category" class="w-full bg-slate-900 border border-amber-500 rounded px-2 py-2 text-xs text-amber-500 font-bold">
+                                    <option value="accum">คะแนนเก็บ (60)</option><option value="midterm">กลางภาค (20)</option><option value="final">ปลายภาค (30)</option><option value="special">พิเศษ (5)</option>
+                                </select>
+                             </div>
                          </div>
-                         <div id="chapter-wrapper" class="hidden"><select id="task-chapter" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white mb-2"><option value="1">บท 1</option><option value="2">บท 2</option><option value="3">บท 3</option><option value="4">บท 4</option><option value="5">บท 5</option><option value="6">บท 6</option></select></div>
+                         <div id="chapter-wrapper" class="hidden">
+                             <label class="text-[10px] text-slate-400">บทที่ (Chapter)</label>
+                             <select id="task-chapter" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white mb-2"><option value="1">บท 1</option><option value="2">บท 2</option><option value="3">บท 3</option><option value="4">บท 4</option><option value="5">บท 5</option><option value="6">บท 6</option></select>
+                        </div>
                          <div class="grid grid-cols-12 gap-2"><div class="col-span-8"><input id="task-name" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white" placeholder="ชื่องาน"></div><div class="col-span-4"><input id="task-max" type="number" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white text-center" value="10"></div></div>
                          <button type="submit" class="w-full bg-red-700 text-white py-2 rounded text-sm font-bold">สร้างงาน</button>
                      </form>
@@ -146,14 +158,14 @@
 
             <section id="admin-panel-check" class="admin-panel hidden glass rounded-2xl p-5 flex flex-col gap-6">
                 <div class="flex flex-col md:flex-row gap-3 items-center bg-slate-800/60 p-4 rounded-xl border border-slate-700">
-                    <select id="check-class-filter" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-3 text-white outline-none w-full md:w-auto"></select>
-                    <input id="check-student-input" type="text" class="flex-1 w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white outline-none" placeholder="ค้นหาชื่อ...">
-                    <button onclick="performCheck()" class="bg-amber-600 text-white px-6 py-3 rounded-lg font-bold w-full md:w-auto">ตรวจสอบ</button>
+                    <select id="check-class-filter" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-3 text-white outline-none w-full md:w-auto" onchange="performCheck()"></select>
+                    <input id="check-student-input" type="text" class="flex-1 w-full bg-slate-900 border border-amber-500/50 rounded-lg px-4 py-3 text-white outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-center text-lg" placeholder="สแกนบัตร หรือพิมพ์ชื่อที่นี่ (ค้นหาอัตโนมัติ)" oninput="performCheck()" autofocus>
+                    <button onclick="performCheck()" class="hidden md:block bg-amber-600 text-white px-6 py-3 rounded-lg font-bold w-full md:w-auto">ตรวจสอบ</button>
                 </div>
-                <div id="check-result" class="hidden flex flex-col gap-5">
-                    <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl border border-red-900/50 flex justify-between items-center">
-                        <div><h2 id="check-name" class="text-2xl font-bold text-white">-</h2><p id="check-class" class="text-amber-400">-</p></div>
-                        <div class="text-right"><p class="text-xs text-slate-400">คะแนนเก็บรวม</p><p id="check-total-score" class="text-3xl font-bold text-white">0</p></div>
+                <div id="check-result" class="hidden flex flex-col gap-5 fade-in">
+                    <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl border border-red-900/50 flex justify-between items-center shadow-lg">
+                        <div><h2 id="check-name" class="text-3xl font-bold text-white tracking-wide">-</h2><p id="check-class" class="text-amber-400 text-lg font-semibold mt-1">-</p></div>
+                        <div class="text-right bg-slate-900/50 p-3 rounded-xl border border-slate-700"><p class="text-xs text-slate-400">คะแนนเก็บรวม</p><p id="check-total-score" class="text-4xl font-bold text-green-400">0</p></div>
                     </div>
                     <div class="overflow-hidden bg-slate-800/40 rounded-xl border border-slate-700">
                         <table class="min-w-full text-sm text-slate-300"><thead class="bg-slate-900 text-xs uppercase font-semibold text-slate-400"><tr><th class="px-4 py-3 text-left">งาน</th><th class="px-4 py-3 text-right">คะแนน</th></tr></thead><tbody id="check-table-body" class="divide-y divide-slate-700/50"></tbody></table>
@@ -343,13 +355,22 @@
               else document.getElementById('chapter-wrapper').classList.add('hidden');
           };
           document.getElementById('task-class').onchange = (e) => { renderTaskList(e.target.value); };
+          
+          // *** แก้ไข: เพิ่ม Logic การหา SubjectId อัตโนมัติเมื่อสร้างงาน ***
           document.getElementById('form-task').onsubmit = (e) => { 
               e.preventDefault(); 
               const cat = document.getElementById('task-category').value;
               const clsId = document.getElementById('task-class').value;
+              
+              // 1. หา Object ของห้องที่เลือก
+              const clsObj = dataState.classes.find(c => c.id == clsId);
+              // 2. ถ้าเจอห้อง ให้เอา subjectId ของห้องนั้นมาใช้, ถ้าไม่เจอใช้ DEFAULT
+              const realSubjectId = clsObj ? clsObj.subjectId : 'DEFAULT';
+
               saveAndRefresh({ 
                   action: 'addTask', id: Date.now(), 
-                  classId: clsId, subjectId: 'DEFAULT', 
+                  classId: clsId, 
+                  subjectId: realSubjectId, // ใช้ Subject ID จริงๆ
                   category: cat, 
                   chapter: cat === 'accum' ? document.getElementById('task-chapter').value : 0,
                   name: document.getElementById('task-name').value, 
@@ -357,7 +378,7 @@
                   dueDateISO: getThaiDateISO() 
               }); 
               e.target.reset(); 
-              alert("สร้างงานแล้ว");
+              alert("สร้างงานแล้ว (ระบุวิชาอัตโนมัติ)");
               setTimeout(()=>renderTaskList(clsId), 500); 
           };
           
@@ -596,12 +617,26 @@
           saveAndRefresh(p);
       }
 
+      // *** แก้ไข: ฟังก์ชัน PerformCheck แบบ Auto Search ไม่ต้องกด Enter ***
       window.performCheck = function() {
           const txt = document.getElementById('check-student-input').value.trim();
           const cid = document.getElementById('check-class-filter').value;
+          
+          if(txt === "") {
+             document.getElementById('check-result').classList.add('hidden');
+             return; // ถ้าช่องว่าง ให้ซ่อน
+          }
+
           let s = dataState.students.find(x => x.code == txt || x.name.includes(txt));
           if(cid) s = dataState.students.find(x => (x.code == txt || x.name.includes(txt)) && x.classId == cid);
-          if(!s) return alert("ไม่พบนักเรียน");
+          
+          if(!s) {
+             // ถ้าไม่เจอ ไม่ต้อง Alert รบกวน แค่ซ่อน
+             document.getElementById('check-result').classList.add('hidden');
+             return; 
+          }
+
+          // ถ้าเจอ แสดงผลเลย
           document.getElementById('check-result').classList.remove('hidden');
           document.getElementById('check-name').textContent = s.name;
           const cName = dataState.classes.find(c => c.id == s.classId)?.name || '-';
@@ -614,7 +649,9 @@
               const val = sc ? Number(sc.score) : 0;
               if(t.category !== 'special') total += val;
               const tr = document.createElement('tr');
-              tr.innerHTML = `<td class="px-4 py-2 text-slate-300">${t.name}</td><td class="px-4 py-2 text-right text-white font-bold">${val} / ${t.maxScore}</td>`;
+              // ไฮไลท์งานที่ได้ 0 คะแนน หรือยังไม่ได้ทำ
+              const scoreClass = val > 0 ? "text-white font-bold" : "text-slate-500";
+              tr.innerHTML = `<td class="px-4 py-2 text-slate-300">${t.name}</td><td class="px-4 py-2 text-right ${scoreClass}">${val} / ${t.maxScore}</td>`;
               tbody.appendChild(tr);
           });
           document.getElementById('check-total-score').textContent = total;
@@ -698,7 +735,7 @@
           downloadCSV(csv, "att_matrix.csv");
       };
 
-      // *** STUDENT DASHBOARD (V7.4 - MULTI SUBJECT) ***
+      // *** STUDENT DASHBOARD (V7.5 - Update Button Grid UI) ***
       window.handleStudentLogin = function() {
           const c = document.getElementById('student-login-id').value.trim();
           const s = dataState.students.find(x => x.code == c);
@@ -758,21 +795,50 @@
               // Summary Table
               html += `<div class="overflow-x-auto mb-4"><table class="w-full text-sm text-center text-slate-300"><thead class="bg-slate-800 text-xs text-slate-400"><tr><th class="p-1">C1</th><th class="p-1">C2</th><th class="p-1">C3</th><th class="p-1">C4</th><th class="p-1">C5</th><th class="p-1">C6</th><th class="p-1 text-blue-400">Mid</th><th class="p-1 text-purple-400">Final</th><th class="p-1 text-white bg-slate-700">Total</th><th class="p-1 text-green-400">Grade</th></tr></thead><tbody><tr>${chapScores.map(c=>`<td class="p-1 font-bold">${c}</td>`).join('')}<td class="p-1 text-blue-300 font-bold">${mid}</td><td class="p-1 text-purple-300 font-bold">${final}</td><td class="p-1 text-white font-bold bg-slate-700/50">${total}</td><td class="p-1 text-green-400 font-bold text-lg">${grade}</td></tr></tbody></table></div>`;
               
-              // Task List
-              html += `<div class="mt-2"><h4 class="text-xs text-slate-400 mb-2 font-bold">รายการงาน</h4><div class="space-y-1 max-h-40 overflow-y-auto pr-1">`;
+              // *** ปรับปรุง UI ส่วนแสดงรายการงานเป็นแบบปุ่ม Grid ***
+              html += `<div class="mt-2"><h4 class="text-xs text-slate-400 mb-2 font-bold">สถานะงาน</h4>`;
+              
+              // ใช้ Grid Layout แบบปุ่ม
+              html += `<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-60 overflow-y-auto pr-1">`;
               
               const today = getThaiDateISO();
               subjectTasks.forEach(t => {
                   const sc = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id);
                   const hasScore = !!sc;
-                  let statusBadge = '';
-                  if(hasScore) statusBadge = `<span class="text-[10px] bg-green-900/50 text-green-400 px-1.5 py-0.5 rounded border border-green-800">ส่งแล้ว</span>`;
-                  else if(t.dueDateISO < today) statusBadge = `<span class="text-[10px] bg-red-900/50 text-red-400 px-1.5 py-0.5 rounded border border-red-800">ขาดส่ง</span>`;
-                  else statusBadge = `<span class="text-[10px] bg-yellow-900/50 text-yellow-400 px-1.5 py-0.5 rounded border border-yellow-800">รอส่ง</span>`;
                   
-                  html += `<div class="flex justify-between items-center bg-slate-800/50 p-2 rounded border border-slate-700"><div class="truncate pr-2"><div class="text-sm text-slate-200">${t.name}</div><div class="text-[10px] text-slate-500">เต็ม ${t.maxScore}</div></div><div class="text-right flex flex-col items-end"><span class="font-bold text-white text-sm">${hasScore ? sc.score : '-'}</span>${statusBadge}</div></div>`;
+                  // กำหนดสีตามสถานะ
+                  let statusClass = "";
+                  let statusText = "";
+                  let icon = "";
+
+                  if(hasScore) {
+                      // ส่งแล้ว (มีคะแนน) -> สีเขียว
+                      statusClass = "bg-green-900/30 border-green-600 text-green-400 hover:bg-green-900/50";
+                      statusText = `${sc.score}`;
+                      icon = `<i class="fa-solid fa-check-circle mb-1"></i>`;
+                  } else if(t.dueDateISO < today) {
+                      // ขาดส่ง (ไม่มีคะแนน และเลยกำหนด) -> สีแดง
+                      statusClass = "bg-red-900/30 border-red-600 text-red-400 hover:bg-red-900/50";
+                      statusText = "ขาดส่ง";
+                      icon = `<i class="fa-solid fa-circle-exclamation mb-1"></i>`;
+                  } else {
+                      // รอส่ง (ไม่มีคะแนน แต่ยังไม่เลยกำหนด) -> สีเหลือง
+                      statusClass = "bg-yellow-900/30 border-yellow-600 text-yellow-400 hover:bg-yellow-900/50";
+                      statusText = "รอส่ง";
+                      icon = `<i class="fa-regular fa-clock mb-1"></i>`;
+                  }
+
+                  // สร้าง HTML กล่องปุ่ม
+                  html += `
+                    <div class="${statusClass} border rounded-lg p-3 flex flex-col items-center justify-center text-center transition-all cursor-default relative">
+                        <div class="text-[10px] text-slate-300 absolute top-1 right-2 w-full text-right truncate pl-2 opacity-50">${t.category}</div>
+                        <div class="text-lg mt-2">${icon}</div>
+                        <div class="text-xs font-bold truncate w-full px-1 mb-1">${t.name}</div>
+                        <div class="text-sm font-bold bg-slate-900/40 px-2 rounded mt-1">${statusText} <span class="text-[10px] font-normal opacity-70">/${t.maxScore}</span></div>
+                    </div>
+                  `;
               });
-              html += `</div></div>`;
+              html += `</div></div>`; // End Grid & Container
               
               card.innerHTML = html;
               container.appendChild(card);
