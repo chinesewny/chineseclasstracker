@@ -430,7 +430,8 @@
           });
           switchAdminSubTab(currentPanel);
 
-          if(!isAutoLogin) syncData(); 
+          // [แก้ไขจุดที่ 1] สั่งให้โหลดข้อมูลใหม่เสมอ เพื่อแก้ปัญหาจอดำตอนรีเฟรช
+          syncData(); 
       }
 
       function handleAdminLogout() {
@@ -559,6 +560,22 @@
               container.appendChild(btn);
           }
       }
+
+      // [แก้ไขจุดที่ 2] เพิ่มฟังก์ชัน setScoreMode กลับเข้ามาเพื่อให้ปุ่มกดทำงาน
+      window.setScoreMode = function(mode) {
+          scoreMode = mode;
+          document.querySelectorAll('.btn-score').forEach(b => b.classList.remove('btn-score-active'));
+          document.getElementById('btn-score-manual').classList.remove('btn-score-active');
+          
+          if(mode === 'manual') {
+              document.getElementById('btn-score-manual').classList.add('btn-score-active');
+          } else {
+              document.getElementById(`btn-score-${mode}`).classList.add('btn-score-active');
+          }
+          const inp = document.getElementById('scan-score-input');
+          inp.placeholder = mode === 'manual' ? "โหมด: Popup (ระบุเอง)" : `โหมด: ให้ ${mode} คะแนน`;
+          inp.focus();
+      };
 
       function renderTaskList(classId) {
           const container = document.getElementById('task-list-container');
