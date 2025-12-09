@@ -2,7 +2,7 @@
 <html lang="th">
  <head>
   <meta charset="UTF-8">
-  <title>ChineseClass By Krukong</title>
+  <title>ChineseClass System V8.3 (Grid + PDF Link)</title>
   <link rel="icon" href="https://img5.pic.in.th/file/secure-sv1/-2c77ac97561c12fab.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -400,7 +400,7 @@
                   id:p.id, classId:p.classId, subjectId:p.subjectId, 
                   category:p.category, chapter:p.chapter, 
                   name:p.name, maxScore:p.maxScore, dueDateISO:p.dueDateISO,
-                  description: p.description, fileLink: p.fileLink // [UPDATE]
+                  description: p.description, fileLink: p.fileLink 
               });
           }
 
@@ -409,7 +409,7 @@
               if(t) {
                   t.name = p.name; t.maxScore = p.maxScore; 
                   t.category = p.category; t.chapter = p.chapter;
-                  t.description = p.description; t.fileLink = p.fileLink; // [UPDATE]
+                  t.description = p.description; t.fileLink = p.fileLink; 
               }
           }
 
@@ -897,7 +897,7 @@
           downloadCSV(csv, "att_matrix.csv");
       };
 
-      // Student Dashboard [UPDATE: Render details]
+      // Student Dashboard
       window.handleStudentLogin = function() {
           if (!dataState.students || dataState.students.length === 0) {
               alert("⚠️ ระบบยังโหลดข้อมูลไม่เสร็จ หรือเชื่อมต่อ Google Sheet ไม่ได้\nกรุณากดรีเฟรชหน้าจอ หรือรอสักครู่...");
@@ -961,29 +961,40 @@
               let html = `<h3 class="font-bold text-lg text-white mb-3 border-l-4 border-amber-500 pl-3">${subName}</h3>`;
               html += `<div class="overflow-x-auto mb-4"><table class="w-full text-sm text-center text-slate-300"><thead class="bg-slate-800 text-xs text-slate-400"><tr><th class="p-1">C1</th><th class="p-1">C2</th><th class="p-1">C3</th><th class="p-1">C4</th><th class="p-1">C5</th><th class="p-1">C6</th><th class="p-1 text-blue-400">Mid</th><th class="p-1 text-purple-400">Final</th><th class="p-1 text-white bg-slate-700">Total</th><th class="p-1 text-green-400">Grade</th></tr></thead><tbody><tr>${chapScores.map(c=>`<td class="p-1 font-bold">${c}</td>`).join('')}<td class="p-1 text-blue-300 font-bold">${mid}</td><td class="p-1 text-purple-300 font-bold">${final}</td><td class="p-1 text-white font-bold bg-slate-700/50">${total}</td><td class="p-1 text-green-400 font-bold text-lg">${grade}</td></tr></tbody></table></div>`;
               
-              html += `<div class="mt-2"><h4 class="text-xs text-slate-400 mb-2 font-bold">สถานะงาน</h4><div class="space-y-2 max-h-60 overflow-y-auto pr-1">`;
+              // [REVERTED] กลับมาใช้ Grid Box ตามคำเรียกร้อง
+              html += `<div class="mt-2"><h4 class="text-xs text-slate-400 mb-2 font-bold">สถานะงาน (กดดูรายละเอียด)</h4><div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-60 overflow-y-auto pr-1">`;
               
-              // [UPDATE] Student Task List Design (Grid -> List for detail view)
               subjectTasks.forEach(t => {
                   const sc = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id);
-                  let statusBadge = "";
-                  if(sc) { statusBadge = `<span class="bg-green-900/50 text-green-400 px-2 py-1 rounded text-xs font-bold border border-green-700"><i class="fa-solid fa-check"></i> ${sc.score}</span>`; }
-                  else if(t.dueDateISO < today) { statusBadge = `<span class="bg-red-900/50 text-red-400 px-2 py-1 rounded text-xs border border-red-700">ขาดส่ง</span>`; }
-                  else { statusBadge = `<span class="bg-yellow-900/50 text-yellow-400 px-2 py-1 rounded text-xs border border-yellow-700">รอส่ง</span>`; }
+                  let statusClass = "", statusText = "", icon = "";
+                  
+                  if(sc) { 
+                      statusClass = "bg-green-900/30 border-green-600 text-green-400 hover:bg-green-900/50"; 
+                      statusText = `${sc.score}`; 
+                      icon = `<i class="fa-solid fa-check-circle mb-1"></i>`; 
+                  }
+                  else if(t.dueDateISO < today) { 
+                      statusClass = "bg-red-900/30 border-red-600 text-red-400 hover:bg-red-900/50"; 
+                      statusText = "ขาดส่ง"; 
+                      icon = `<i class="fa-solid fa-circle-exclamation mb-1"></i>`; 
+                  }
+                  else { 
+                      statusClass = "bg-yellow-900/30 border-yellow-600 text-yellow-400 hover:bg-yellow-900/50"; 
+                      statusText = "รอส่ง"; 
+                      icon = `<i class="fa-regular fa-clock mb-1"></i>`; 
+                  }
+
+                  // สร้าง tooltip อย่างง่ายโดยใช้ title attribute และ onclick alert
+                  let detailText = `งาน: ${t.name}\nเต็ม: ${t.maxScore}\n\nรายละเอียด:\n${t.description || '-'}`;
                   
                   html += `
-                    <div class="bg-slate-800/40 p-3 rounded-lg border border-slate-700">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1 pr-2">
-                                <div class="text-[10px] text-amber-500 font-bold mb-0.5">${t.category} ${t.chapter > 0 ? 'Ch.'+t.chapter : ''}</div>
-                                <div class="text-sm text-white font-bold">${t.name} <span class="text-xs text-slate-500 font-normal">(${t.maxScore} คะแนน)</span></div>
-                                ${t.description ? `<div class="text-xs text-slate-400 mt-1">${t.description}</div>` : ''}
-                                ${t.fileLink ? `<a href="${t.fileLink}" target="_blank" class="inline-flex items-center gap-1 mt-2 text-xs bg-blue-900/30 text-blue-300 px-2 py-1 rounded hover:bg-blue-800 transition-colors border border-blue-800"><i class="fa-solid fa-file-pdf"></i> เปิดเอกสารประกอบ</a>` : ''}
-                            </div>
-                            <div class="flex flex-col items-end gap-1">
-                                ${statusBadge}
-                            </div>
-                        </div>
+                    <div class="${statusClass} border rounded-lg p-3 flex flex-col items-center justify-center text-center transition-all cursor-pointer relative hover:scale-105" title="${detailText}" onclick="alert('${detailText.replace(/\n/g, '\\n')}')">
+                        <div class="text-[10px] text-slate-300 absolute top-1 right-2 w-full text-right truncate pl-2 opacity-50">${t.category}</div>
+                        <div class="text-lg mt-2">${icon}</div>
+                        <div class="text-xs font-bold truncate w-full px-1 mb-1">${t.name}</div>
+                        <div class="text-sm font-bold bg-slate-900/40 px-2 rounded mt-1">${statusText} <span class="text-[10px] font-normal opacity-70">/${t.maxScore}</span></div>
+                        
+                        ${t.fileLink ? `<a href="${t.fileLink}" target="_blank" onclick="event.stopPropagation()" class="mt-2 text-[10px] bg-blue-600 hover:bg-blue-500 text-white px-2 py-0.5 rounded flex items-center gap-1"><i class="fa-solid fa-file-pdf"></i> ไฟล์</a>` : ''}
                     </div>
                   `;
               });
