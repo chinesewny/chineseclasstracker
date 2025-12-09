@@ -1,8 +1,8 @@
- <!doctype html>
+<!doctype html>
 <html lang="th">
  <head>
   <meta charset="UTF-8">
-  <title>ChineseClass By Krukong</title>
+  <title>ChineseClass System V8 (Final Complete)</title>
   <link rel="icon" href="https://img5.pic.in.th/file/secure-sv1/-2c77ac97561c12fab.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -66,6 +66,20 @@
         </div>
 
         <div id="admin-content-wrapper" class="hidden flex flex-col gap-5">
+            
+            <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-full bg-red-700 flex items-center justify-center text-lg text-white font-bold shadow-md"><i class="fa-solid fa-user-tie"></i></div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white">ผู้ดูแลระบบ (Admin)</h3>
+                        <p class="text-[10px] text-slate-400">สถานะ: <span class="text-green-400">เข้าสู่ระบบแล้ว</span></p>
+                    </div>
+                </div>
+                <button onclick="handleAdminLogout()" class="bg-slate-700 hover:bg-red-600 text-slate-300 hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition-all border border-slate-600">
+                    <i class="fa-solid fa-power-off mr-2"></i>ออกจากระบบ
+                </button>
+            </div>
+
             <div class="grid grid-cols-2 md:grid-cols-6 gap-2 bg-slate-900/50 p-2 rounded-xl border border-slate-800">
                 <button onclick="switchAdminSubTab('basic')" id="menu-basic" class="menu-btn bg-red-800/80 text-white shadow"><i class="fa-solid fa-folder-open"></i> ข้อมูล</button> 
                 <button onclick="switchAdminSubTab('scan')" id="menu-scan" class="menu-btn text-slate-400 hover:text-white"><i class="fa-solid fa-qrcode"></i> ให้คะแนน</button>
@@ -209,6 +223,9 @@
                       <input id="student-login-id" type="text" class="w-full bg-slate-900 border-2 border-slate-600 rounded-xl px-4 py-3 text-center text-white text-lg outline-none" placeholder="พิมพ์เลขประจำตัวนักเรียน">
                       <button onclick="handleStudentLogin()" class="w-full py-3 rounded-lg bg-blue-700 hover:bg-blue-600 text-white font-bold shadow-lg">ตรวจสอบข้อมูล</button>
                   </div>
+                  <div id="data-status" class="mt-4 text-xs text-slate-500 text-center">
+                    <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> กำลังเชื่อมต่อฐานข้อมูล...
+                  </div>
               </div>
           </div>
           <div id="student-dashboard" class="hidden flex flex-col gap-6">
@@ -282,15 +299,21 @@
           renderScoreButtons(); 
           initEventListeners();
 
-          // Check Login Session (แก้ปัญหาเด้งออก)
+          // Check Login Session
           const savedSession = localStorage.getItem('wany_admin_session');
           if(savedSession === 'active') {
-              showAdminPanel(true); // ข้ามหน้า Login ทันที
+              showAdminPanel(true); // Auto Login
+          } else {
+              // ถ้ายังไม่ login ให้โหลดข้อมูลมารอไว้เลย (สำหรับนักเรียน)
+              syncData();
           }
       });
 
       // --- CORE LOGIC: SYNC & UPDATE ---
       async function syncData() {
+          const statusEl = document.getElementById('data-status');
+          if(statusEl) statusEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-yellow-500"></i> กำลังโหลดข้อมูล...';
+
           try {
              // โหลดข้อมูลจาก Google Sheet
              const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData`);
@@ -298,12 +321,19 @@
              
              if(json) { 
                  dataState = json; 
-                 refreshUI(); // เรียกฟังก์ชันรวมเพื่อรีเฟรชหน้าจอ
-                 showToast("ดึงข้อมูลล่าสุดแล้ว", "bg-blue-600");
+                 refreshUI(); 
+                 
+                 // Update Status
+                 if(statusEl) {
+                     statusEl.innerHTML = `<span class="text-green-400"><i class="fa-solid fa-wifi"></i> ออนไลน์ | นักเรียน ${json.students.length} คน</span>`;
+                 }
              }
           } catch(e) { 
               console.error(e); 
               showToast("เชื่อมต่อ Server ไม่ได้", "bg-red-600");
+              if(statusEl) {
+                  statusEl.innerHTML = `<span class="text-red-400 cursor-pointer" onclick="syncData()"><i class="fa-solid fa-rotate-right"></i> โหลดล้มเหลว (กดเพื่อลองใหม่)</span>`;
+              }
           }
       }
 
@@ -323,15 +353,10 @@
           }
       }
 
-      // ฟังก์ชันหัวใจสำคัญ: อัพเดตหน้าจอทันที + ส่งข้อมูลเบื้องหลัง
+      // Optimistic Update
       async function saveAndRefresh(payload) {
-          // 1. Optimistic Update
           updateLocalState(payload);
-
-          // 2. Refresh UI
           refreshSpecificUI(payload);
-
-          // 3. Background Sync
           try {
               await fetch(GOOGLE_SCRIPT_URL, { method:'POST', body:JSON.stringify(payload) });
           } catch(e) {
@@ -392,20 +417,30 @@
           document.getElementById('admin-login-wrapper').classList.add('hidden');
           document.getElementById('admin-content-wrapper').classList.remove('hidden');
           document.getElementById('tab-btn-admin').className="px-5 py-2 rounded-full text-sm font-semibold text-white bg-red-700 shadow-lg transition-all";
+          document.getElementById('tab-btn-student').className="px-5 py-2 rounded-full text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-all";
           
           localStorage.setItem('wany_admin_session', 'active');
+          
+          refreshUI(); // Render Immediate
+          
+          // Open default tab or current tab
+          let currentPanel = 'attendance';
+          document.querySelectorAll('.admin-panel').forEach(p => {
+              if(!p.classList.contains('hidden')) currentPanel = p.id.replace('admin-panel-', '');
+          });
+          switchAdminSubTab(currentPanel);
 
-          if(isAutoLogin) syncData(); 
-          else {
-              refreshDropdowns(); 
-              syncData(); 
-          }
-          switchAdminSubTab('attendance'); 
+          if(!isAutoLogin) syncData(); 
       }
 
       function handleAdminLogout() {
+          if(!confirm("ต้องการออกจากระบบคุณครูใช่หรือไม่?")) return;
           localStorage.removeItem('wany_admin_session');
-          location.reload(); 
+          document.getElementById('admin-content-wrapper').classList.add('hidden');
+          document.getElementById('admin-login-wrapper').classList.remove('hidden');
+          document.getElementById('admin-username').value = '';
+          document.getElementById('admin-password').value = '';
+          setTimeout(() => location.reload(), 300);
       }
 
       function refreshDropdowns() {
@@ -482,7 +517,7 @@
               showToast("แก้ไขงานสำเร็จ");
           };
 
-          // ปรับปรุงส่วนเลือกห้องเรียน: ให้แสดงชื่อวิชา และรีเฟรชรายการ
+          // Subject Display Logic
           document.getElementById('task-class').onchange = (e) => { 
              renderTaskList(e.target.value);
              const c = dataState.classes.find(x => x.id == e.target.value);
@@ -807,11 +842,28 @@
 
       // Student Dashboard
       window.handleStudentLogin = function() {
+          if (!dataState.students || dataState.students.length === 0) {
+              alert("⚠️ ระบบยังโหลดข้อมูลไม่เสร็จ หรือเชื่อมต่อ Google Sheet ไม่ได้\nกรุณากดรีเฟรชหน้าจอ หรือรอสักครู่...");
+              syncData(); 
+              return;
+          }
+
           const c = document.getElementById('student-login-id').value.trim();
-          const s = dataState.students.find(x => x.code == c);
-          if(!s) return alert("ไม่พบข้อมูล");
+          console.log(`กำลังค้นหา: ${c} จากนักเรียนทั้งหมด ${dataState.students.length} คน`);
+          
+          let s = dataState.students.find(x => x.code == c); 
+          if(!s) {
+              const s_loose = dataState.students.find(x => Number(x.code) == Number(c));
+              if (s_loose) { s = s_loose; } 
+              else {
+                  alert(`❌ ไม่พบรหัสนักเรียน: ${c}\n(ในระบบมีข้อมูลนักเรียน ${dataState.students.length} คน)\nกรุณาตรวจสอบรหัสให้ถูกต้อง`);
+                  return;
+              }
+          }
+          
           document.getElementById('student-login-wrapper').classList.add('hidden');
           document.getElementById('student-dashboard').classList.remove('hidden');
+          
           document.getElementById('std-dash-name').textContent = s.name;
           document.getElementById('std-dash-id').textContent = "ID: " + s.code;
           const cName = dataState.classes.find(cls => cls.id == s.classId)?.name || '-';
@@ -852,7 +904,6 @@
               let html = `<h3 class="font-bold text-lg text-white mb-3 border-l-4 border-amber-500 pl-3">${subName}</h3>`;
               html += `<div class="overflow-x-auto mb-4"><table class="w-full text-sm text-center text-slate-300"><thead class="bg-slate-800 text-xs text-slate-400"><tr><th class="p-1">C1</th><th class="p-1">C2</th><th class="p-1">C3</th><th class="p-1">C4</th><th class="p-1">C5</th><th class="p-1">C6</th><th class="p-1 text-blue-400">Mid</th><th class="p-1 text-purple-400">Final</th><th class="p-1 text-white bg-slate-700">Total</th><th class="p-1 text-green-400">Grade</th></tr></thead><tbody><tr>${chapScores.map(c=>`<td class="p-1 font-bold">${c}</td>`).join('')}<td class="p-1 text-blue-300 font-bold">${mid}</td><td class="p-1 text-purple-300 font-bold">${final}</td><td class="p-1 text-white font-bold bg-slate-700/50">${total}</td><td class="p-1 text-green-400 font-bold text-lg">${grade}</td></tr></tbody></table></div>`;
               
-              // Grid Button UI
               html += `<div class="mt-2"><h4 class="text-xs text-slate-400 mb-2 font-bold">สถานะงาน</h4><div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-60 overflow-y-auto pr-1">`;
               subjectTasks.forEach(t => {
                   const sc = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id);
