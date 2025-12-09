@@ -1,9 +1,10 @@
-<!doctype html>
+ <!doctype html>
 <html lang="th">
  <head>
   <meta charset="UTF-8">
-  <title>ChineseClass By Krukong</title> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChineseClass By Krukong</title>
   <link rel="icon" href="https://img5.pic.in.th/file/secure-sv1/-2c77ac97561c12fab.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -23,8 +24,7 @@
 
       #toast-notification { transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s; }
       .toast-show { transform: translate(-50%, 0) !important; opacity: 1 !important; }
-
-      /* Animation for Search Result */
+      
       .fade-in { animation: fadeIn 0.3s ease-in-out; }
       @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
@@ -95,12 +95,13 @@
                     </form>
                  </div>
                </div>
+               
                <div class="glass p-4 rounded-xl border-l-4 border-l-red-500 mt-5">
                      <h4 class="text-sm font-semibold text-white mb-3">3. สร้าง/แก้ไขงาน</h4>
                      <form id="form-task" class="space-y-3">
                          <div class="grid grid-cols-2 gap-3">
                              <div>
-                                <label class="text-[10px] text-slate-400">เลือกห้อง (Auto วิชา)</label>
+                                <label class="text-[10px] text-slate-400">เลือกห้อง <span id="task-subject-display" class="text-amber-400 font-bold ml-1"></span></label>
                                 <select id="task-class" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white"></select>
                              </div>
                              <div>
@@ -110,10 +111,14 @@
                                 </select>
                              </div>
                          </div>
-                         <div id="chapter-wrapper" class="hidden">
-                             <label class="text-[10px] text-slate-400">บทที่ (Chapter)</label>
-                             <select id="task-chapter" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white mb-2"><option value="1">บท 1</option><option value="2">บท 2</option><option value="3">บท 3</option><option value="4">บท 4</option><option value="5">บท 5</option><option value="6">บท 6</option></select>
+                         
+                         <div id="chapter-wrapper">
+                             <label class="text-[10px] text-slate-400">บทที่ (Chapter) ของวิชานี้</label>
+                             <select id="task-chapter" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white mb-2">
+                                <option value="1">บท 1</option><option value="2">บท 2</option><option value="3">บท 3</option><option value="4">บท 4</option><option value="5">บท 5</option><option value="6">บท 6</option>
+                             </select>
                         </div>
+
                          <div class="grid grid-cols-12 gap-2"><div class="col-span-8"><input id="task-name" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white" placeholder="ชื่องาน"></div><div class="col-span-4"><input id="task-max" type="number" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white text-center" value="10"></div></div>
                          <button type="submit" class="w-full bg-red-700 text-white py-2 rounded text-sm font-bold">สร้างงาน</button>
                      </form>
@@ -257,7 +262,7 @@
    </div>
   </div>
 
-<script>
+  <script>
       // ***********************************************
       // CONFIGURATION
       // ***********************************************
@@ -302,21 +307,17 @@
           }
       }
 
-      // ฟังก์ชันที่ขาดหายไป (เพิ่มกลับมาให้แล้วครับ)
       function refreshUI() {
           refreshDropdowns();
           
-          // รีเฟรชหน้ารายการงานถ้าเปิดอยู่
           const taskClass = document.getElementById('task-class').value;
           if(taskClass) renderTaskList(taskClass);
 
-          // รีเฟรชหน้าให้คะแนนถ้าเปิดอยู่
           if(!document.getElementById('admin-panel-scan').classList.contains('hidden')) {
               updateScanTaskDropdown();
               renderScoreRoster();
           }
 
-          // รีเฟรชหน้าเช็คชื่อถ้าเปิดอยู่
           if(!document.getElementById('admin-panel-attendance').classList.contains('hidden')) {
               renderLiveRoster();
           }
@@ -324,15 +325,14 @@
 
       // ฟังก์ชันหัวใจสำคัญ: อัพเดตหน้าจอทันที + ส่งข้อมูลเบื้องหลัง
       async function saveAndRefresh(payload) {
-          // 1. Optimistic Update: อัพเดตข้อมูลในเครื่องทันที (ไม่ต้องรอ Server)
+          // 1. Optimistic Update
           updateLocalState(payload);
 
-          // 2. Refresh UI: แสดงผลทันที
+          // 2. Refresh UI
           refreshSpecificUI(payload);
 
-          // 3. Background Sync: ส่งข้อมูลไปเก็บใน Google Sheet
+          // 3. Background Sync
           try {
-              // ส่งข้อมูลแบบไม่รอ (Fire and forget visual) แต่รอผลลัพธ์จริง
               await fetch(GOOGLE_SCRIPT_URL, { method:'POST', body:JSON.stringify(payload) });
           } catch(e) {
               console.error("Save failed", e);
@@ -340,7 +340,6 @@
           }
       }
 
-      // จัดการข้อมูลในหน่วยความจำ (Local State)
       function updateLocalState(p) {
           if(p.action === 'addSubject') dataState.subjects.push({id:p.id, name:p.name});
           
@@ -379,7 +378,6 @@
           }
       }
 
-      // รีเฟรชเฉพาะส่วนที่เกี่ยวข้อง (Performance)
       function refreshSpecificUI(p) {
           if(['addSubject','addClass'].includes(p.action)) refreshDropdowns();
           if(p.action === 'addTask' || p.action === 'editTask') {
@@ -387,7 +385,6 @@
               updateScanTaskDropdown(); 
           }
           if(p.action === 'addScore') renderScoreRoster();
-          // Attendance อัพเดตผ่าน DOM โดยตรงในฟังก์ชัน processAtt แล้ว
       }
 
       // --- UI HELPERS ---
@@ -485,7 +482,14 @@
               showToast("แก้ไขงานสำเร็จ");
           };
 
-          document.getElementById('task-class').onchange = (e) => { renderTaskList(e.target.value); };
+          // ปรับปรุงส่วนเลือกห้องเรียน: ให้แสดงชื่อวิชา และรีเฟรชรายการ
+          document.getElementById('task-class').onchange = (e) => { 
+             renderTaskList(e.target.value);
+             const c = dataState.classes.find(x => x.id == e.target.value);
+             const s = c ? dataState.subjects.find(sub => sub.id == c.subjectId) : null;
+             document.getElementById('task-subject-display').textContent = s ? `(${s.name})` : '';
+          };
+          
           document.getElementById('task-category').onchange = (e) => {
               if(e.target.value === 'accum') document.getElementById('chapter-wrapper').classList.remove('hidden');
               else document.getElementById('chapter-wrapper').classList.add('hidden');
