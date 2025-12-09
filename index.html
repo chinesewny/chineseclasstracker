@@ -2,7 +2,7 @@
 <html lang="th">
  <head>
   <meta charset="UTF-8">
-  <title>ChineseClass System V8 (Final Complete)</title>
+  <title>ChineseClass By Krukong</title>
   <link rel="icon" href="https://img5.pic.in.th/file/secure-sv1/-2c77ac97561c12fab.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -134,6 +134,21 @@
                         </div>
 
                          <div class="grid grid-cols-12 gap-2"><div class="col-span-8"><input id="task-name" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white" placeholder="ชื่องาน"></div><div class="col-span-4"><input id="task-max" type="number" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white text-center" value="10"></div></div>
+                         
+                         <div class="bg-slate-900/50 p-3 rounded border border-slate-700 space-y-2">
+                             <div>
+                                 <label class="text-[10px] text-slate-400">รายละเอียดงาน / คำชี้แจง</label>
+                                 <textarea id="task-desc" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-2 text-xs text-white h-16 resize-none" placeholder="เช่น ให้นักเรียนคัดศัพท์บทที่ 1..."></textarea>
+                             </div>
+                             <div>
+                                 <label class="text-[10px] text-slate-400">แนบลิงก์เอกสาร (PDF / Google Drive)</label>
+                                 <div class="flex items-center gap-2">
+                                     <i class="fa-solid fa-link text-slate-500"></i>
+                                     <input id="task-link" type="text" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-2 text-xs text-blue-300" placeholder="https://drive.google.com/...">
+                                 </div>
+                             </div>
+                         </div>
+
                          <button type="submit" class="w-full bg-red-700 text-white py-2 rounded text-sm font-bold">สร้างงาน</button>
                      </form>
                      <div id="task-edit-list" class="mt-6 border-t border-slate-700 pt-4 hidden">
@@ -262,6 +277,7 @@
             <div class="grid grid-cols-2 gap-3 mt-6"><button onclick="document.getElementById('score-modal').classList.add('hidden')" class="py-2 rounded-lg bg-slate-800 text-slate-300">ยกเลิก</button><button id="btn-modal-save" class="py-2 rounded-lg bg-red-700 text-white font-bold">บันทึก (Enter)</button></div>
         </div>
     </div>
+    
     <div id="edit-task-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm">
         <div class="bg-slate-900 border border-slate-600 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
             <h3 class="text-lg font-bold text-white mb-4">แก้ไขงาน</h3>
@@ -270,10 +286,15 @@
                 <div><label class="text-xs text-slate-400">ชื่องาน</label><input id="edit-task-name" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-2 text-white text-sm"></div>
                 <div class="grid grid-cols-2 gap-2"><div><label class="text-xs text-slate-400">คะแนนเต็ม</label><input id="edit-task-max" type="number" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-2 text-white text-sm text-center"></div><div><label class="text-xs text-slate-400">ประเภท</label><select id="edit-task-category" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-2 text-white text-sm"><option value="accum">คะแนนเก็บ</option><option value="midterm">กลางภาค</option><option value="final">ปลายภาค</option><option value="special">พิเศษ</option></select></div></div>
                 <div><label class="text-xs text-slate-400">บทที่</label><select id="edit-task-chapter" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-2 text-white text-sm"><option value="0">-</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></div>
+                
+                <div><label class="text-xs text-slate-400">รายละเอียด</label><textarea id="edit-task-desc" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-2 text-white text-sm h-14 resize-none"></textarea></div>
+                <div><label class="text-xs text-slate-400">ลิงก์ไฟล์</label><input id="edit-task-link" type="text" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-2 text-blue-300 text-sm"></div>
+
                 <div class="flex justify-end gap-2 mt-4"><button type="button" onclick="document.getElementById('edit-task-modal').classList.add('hidden')" class="px-4 py-2 rounded bg-slate-700 text-slate-300 text-sm">ยกเลิก</button><button type="submit" class="px-4 py-2 rounded bg-yellow-600 text-white text-sm font-bold">บันทึกแก้ไข</button></div>
             </form>
         </div>
     </div>
+    
     <div id="toast-notification" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 translate-y-20 opacity-0 font-bold border border-green-400"><i class="fa-solid fa-circle-check text-xl"></i><span id="toast-message">บันทึกสำเร็จ</span></div>
 
    </div>
@@ -378,7 +399,8 @@
               dataState.tasks.push({
                   id:p.id, classId:p.classId, subjectId:p.subjectId, 
                   category:p.category, chapter:p.chapter, 
-                  name:p.name, maxScore:p.maxScore, dueDateISO:p.dueDateISO
+                  name:p.name, maxScore:p.maxScore, dueDateISO:p.dueDateISO,
+                  description: p.description, fileLink: p.fileLink // [UPDATE]
               });
           }
 
@@ -387,6 +409,7 @@
               if(t) {
                   t.name = p.name; t.maxScore = p.maxScore; 
                   t.category = p.category; t.chapter = p.chapter;
+                  t.description = p.description; t.fileLink = p.fileLink; // [UPDATE]
               }
           }
 
@@ -430,7 +453,7 @@
           });
           switchAdminSubTab(currentPanel);
 
-          // [แก้ไขจุดที่ 1] สั่งให้โหลดข้อมูลใหม่เสมอ เพื่อแก้ปัญหาจอดำตอนรีเฟรช
+          // Force sync to ensure data is latest even on refresh
           syncData(); 
       }
 
@@ -494,7 +517,9 @@
                   chapter: cat === 'accum' ? document.getElementById('task-chapter').value : 0,
                   name: document.getElementById('task-name').value, 
                   maxScore: document.getElementById('task-max').value, 
-                  dueDateISO: getThaiDateISO() 
+                  dueDateISO: getThaiDateISO(),
+                  description: document.getElementById('task-desc').value, // [UPDATE]
+                  fileLink: document.getElementById('task-link').value // [UPDATE]
               }); 
               e.target.reset(); 
               showToast("สร้างงานเรียบร้อย (Real-time)");
@@ -511,7 +536,9 @@
                   maxScore: document.getElementById('edit-task-max').value,
                   category: document.getElementById('edit-task-category').value,
                   chapter: document.getElementById('edit-task-chapter').value,
-                  classId: originalTask.classId, subjectId: originalTask.subjectId, dueDateISO: originalTask.dueDateISO
+                  classId: originalTask.classId, subjectId: originalTask.subjectId, dueDateISO: originalTask.dueDateISO,
+                  description: document.getElementById('edit-task-desc').value, // [UPDATE]
+                  fileLink: document.getElementById('edit-task-link').value // [UPDATE]
               });
               
               document.getElementById('edit-task-modal').classList.add('hidden');
@@ -561,7 +588,6 @@
           }
       }
 
-      // [แก้ไขจุดที่ 2] เพิ่มฟังก์ชัน setScoreMode กลับเข้ามาเพื่อให้ปุ่มกดทำงาน
       window.setScoreMode = function(mode) {
           scoreMode = mode;
           document.querySelectorAll('.btn-score').forEach(b => b.classList.remove('btn-score-active'));
@@ -593,6 +619,20 @@
               container.appendChild(div);
           });
       }
+
+      // [UPDATE] Populate new fields in edit modal
+      window.openEditTaskModal = function(taskId) {
+          const t = dataState.tasks.find(x => x.id == taskId);
+          if(!t) return;
+          document.getElementById('edit-task-id').value = t.id;
+          document.getElementById('edit-task-name').value = t.name;
+          document.getElementById('edit-task-max').value = t.maxScore;
+          document.getElementById('edit-task-category').value = t.category;
+          document.getElementById('edit-task-chapter').value = t.chapter || 0;
+          document.getElementById('edit-task-desc').value = t.description || '';
+          document.getElementById('edit-task-link').value = t.fileLink || '';
+          document.getElementById('edit-task-modal').classList.remove('hidden');
+      };
 
       function updateScanTaskDropdown() {
           const cid = document.getElementById('scan-class-select').value;
@@ -857,7 +897,7 @@
           downloadCSV(csv, "att_matrix.csv");
       };
 
-      // Student Dashboard
+      // Student Dashboard [UPDATE: Render details]
       window.handleStudentLogin = function() {
           if (!dataState.students || dataState.students.length === 0) {
               alert("⚠️ ระบบยังโหลดข้อมูลไม่เสร็จ หรือเชื่อมต่อ Google Sheet ไม่ได้\nกรุณากดรีเฟรชหน้าจอ หรือรอสักครู่...");
@@ -921,14 +961,31 @@
               let html = `<h3 class="font-bold text-lg text-white mb-3 border-l-4 border-amber-500 pl-3">${subName}</h3>`;
               html += `<div class="overflow-x-auto mb-4"><table class="w-full text-sm text-center text-slate-300"><thead class="bg-slate-800 text-xs text-slate-400"><tr><th class="p-1">C1</th><th class="p-1">C2</th><th class="p-1">C3</th><th class="p-1">C4</th><th class="p-1">C5</th><th class="p-1">C6</th><th class="p-1 text-blue-400">Mid</th><th class="p-1 text-purple-400">Final</th><th class="p-1 text-white bg-slate-700">Total</th><th class="p-1 text-green-400">Grade</th></tr></thead><tbody><tr>${chapScores.map(c=>`<td class="p-1 font-bold">${c}</td>`).join('')}<td class="p-1 text-blue-300 font-bold">${mid}</td><td class="p-1 text-purple-300 font-bold">${final}</td><td class="p-1 text-white font-bold bg-slate-700/50">${total}</td><td class="p-1 text-green-400 font-bold text-lg">${grade}</td></tr></tbody></table></div>`;
               
-              html += `<div class="mt-2"><h4 class="text-xs text-slate-400 mb-2 font-bold">สถานะงาน</h4><div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-60 overflow-y-auto pr-1">`;
+              html += `<div class="mt-2"><h4 class="text-xs text-slate-400 mb-2 font-bold">สถานะงาน</h4><div class="space-y-2 max-h-60 overflow-y-auto pr-1">`;
+              
+              // [UPDATE] Student Task List Design (Grid -> List for detail view)
               subjectTasks.forEach(t => {
                   const sc = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id);
-                  let statusClass = "", statusText = "", icon = "";
-                  if(sc) { statusClass = "bg-green-900/30 border-green-600 text-green-400 hover:bg-green-900/50"; statusText = `${sc.score}`; icon = `<i class="fa-solid fa-check-circle mb-1"></i>`; }
-                  else if(t.dueDateISO < today) { statusClass = "bg-red-900/30 border-red-600 text-red-400 hover:bg-red-900/50"; statusText = "ขาดส่ง"; icon = `<i class="fa-solid fa-circle-exclamation mb-1"></i>`; }
-                  else { statusClass = "bg-yellow-900/30 border-yellow-600 text-yellow-400 hover:bg-yellow-900/50"; statusText = "รอส่ง"; icon = `<i class="fa-regular fa-clock mb-1"></i>`; }
-                  html += `<div class="${statusClass} border rounded-lg p-3 flex flex-col items-center justify-center text-center transition-all cursor-default relative"><div class="text-[10px] text-slate-300 absolute top-1 right-2 w-full text-right truncate pl-2 opacity-50">${t.category}</div><div class="text-lg mt-2">${icon}</div><div class="text-xs font-bold truncate w-full px-1 mb-1">${t.name}</div><div class="text-sm font-bold bg-slate-900/40 px-2 rounded mt-1">${statusText} <span class="text-[10px] font-normal opacity-70">/${t.maxScore}</span></div></div>`;
+                  let statusBadge = "";
+                  if(sc) { statusBadge = `<span class="bg-green-900/50 text-green-400 px-2 py-1 rounded text-xs font-bold border border-green-700"><i class="fa-solid fa-check"></i> ${sc.score}</span>`; }
+                  else if(t.dueDateISO < today) { statusBadge = `<span class="bg-red-900/50 text-red-400 px-2 py-1 rounded text-xs border border-red-700">ขาดส่ง</span>`; }
+                  else { statusBadge = `<span class="bg-yellow-900/50 text-yellow-400 px-2 py-1 rounded text-xs border border-yellow-700">รอส่ง</span>`; }
+                  
+                  html += `
+                    <div class="bg-slate-800/40 p-3 rounded-lg border border-slate-700">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1 pr-2">
+                                <div class="text-[10px] text-amber-500 font-bold mb-0.5">${t.category} ${t.chapter > 0 ? 'Ch.'+t.chapter : ''}</div>
+                                <div class="text-sm text-white font-bold">${t.name} <span class="text-xs text-slate-500 font-normal">(${t.maxScore} คะแนน)</span></div>
+                                ${t.description ? `<div class="text-xs text-slate-400 mt-1">${t.description}</div>` : ''}
+                                ${t.fileLink ? `<a href="${t.fileLink}" target="_blank" class="inline-flex items-center gap-1 mt-2 text-xs bg-blue-900/30 text-blue-300 px-2 py-1 rounded hover:bg-blue-800 transition-colors border border-blue-800"><i class="fa-solid fa-file-pdf"></i> เปิดเอกสารประกอบ</a>` : ''}
+                            </div>
+                            <div class="flex flex-col items-end gap-1">
+                                ${statusBadge}
+                            </div>
+                        </div>
+                    </div>
+                  `;
               });
               html += `</div></div>`;
               card.innerHTML = html; container.appendChild(card);
@@ -946,10 +1003,38 @@
       };
 
       window.logoutStudent = function() { document.getElementById('student-dashboard').classList.add('hidden'); document.getElementById('student-login-wrapper').classList.remove('hidden'); document.getElementById('student-login-id').value=''; };
-      function switchMainTab(t) { document.getElementById('section-admin').classList.add('hidden'); document.getElementById('section-student').classList.add('hidden'); document.getElementById('tab-btn-admin').className="px-5 py-2 rounded-full text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-all"; document.getElementById('tab-btn-student').className="px-5 py-2 rounded-full text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-all"; if(t=='admin'){ 
-          if(localStorage.getItem('wany_admin_session') === 'active') { showAdminPanel(); } 
-          else { document.getElementById('section-admin').classList.remove('hidden'); document.getElementById('admin-login-wrapper').classList.remove('hidden'); document.getElementById('admin-content-wrapper').classList.add('hidden'); document.getElementById('tab-btn-admin').className="px-5 py-2 rounded-full text-sm font-semibold text-white bg-red-700 shadow-lg transition-all"; }
-      } else { document.getElementById('section-student').classList.remove('hidden'); document.getElementById('tab-btn-student').className="px-5 py-2 rounded-full text-sm font-semibold text-white bg-blue-600 shadow-lg transition-all"; document.getElementById('student-login-id').focus(); } }
+      
+      // [FIX HERE] ปรับปรุงฟังก์ชันสลับ Tab ใหม่
+      function switchMainTab(t) { 
+          // 1. ซ่อนทั้ง 2 ส่วนหลักก่อน
+          document.getElementById('section-admin').classList.add('hidden'); 
+          document.getElementById('section-student').classList.add('hidden'); 
+          
+          // 2. ปรับสีปุ่มให้เป็นค่าเริ่มต้น
+          document.getElementById('tab-btn-admin').className="px-5 py-2 rounded-full text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-all"; 
+          document.getElementById('tab-btn-student').className="px-5 py-2 rounded-full text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-all"; 
+          
+          if(t=='admin'){ 
+              // 3. ถ้าเลือก Admin ให้เปิดกล่อง Admin ทันที (แก้ปัญหาหน้าว่าง)
+              document.getElementById('section-admin').classList.remove('hidden');
+              
+              if(localStorage.getItem('wany_admin_session') === 'active') { 
+                  showAdminPanel(); // ถ้ามี Session ให้ไปหน้า Dashboard
+              } 
+              else { 
+                  // ถ้าไม่มี Session ให้ไปหน้า Login
+                  document.getElementById('admin-login-wrapper').classList.remove('hidden'); 
+                  document.getElementById('admin-content-wrapper').classList.add('hidden'); 
+                  document.getElementById('tab-btn-admin').className="px-5 py-2 rounded-full text-sm font-semibold text-white bg-red-700 shadow-lg transition-all"; 
+              }
+          } else { 
+              // 4. ถ้าเลือก Student
+              document.getElementById('section-student').classList.remove('hidden'); 
+              document.getElementById('tab-btn-student').className="px-5 py-2 rounded-full text-sm font-semibold text-white bg-blue-600 shadow-lg transition-all"; 
+              document.getElementById('student-login-id').focus(); 
+          } 
+      }
+
       function switchAdminSubTab(t) { document.querySelectorAll('.admin-panel').forEach(p=>p.classList.add('hidden')); document.getElementById(`admin-panel-${t}`).classList.remove('hidden'); document.querySelectorAll('.menu-btn').forEach(b=>{b.classList.remove('bg-red-800/80','text-white','shadow'); b.classList.add('text-slate-400');}); document.getElementById(`menu-${t}`).classList.remove('text-slate-400'); document.getElementById(`menu-${t}`).classList.add('bg-red-800/80','text-white','shadow'); if(t=='attendance') renderLiveRoster(); if(t=='scan') renderScoreRoster(); }
       window.openEditTaskModal = function(taskId) { const t = dataState.tasks.find(x => x.id == taskId); if(!t) return; document.getElementById('edit-task-id').value = t.id; document.getElementById('edit-task-name').value = t.name; document.getElementById('edit-task-max').value = t.maxScore; document.getElementById('edit-task-category').value = t.category; document.getElementById('edit-task-chapter').value = t.chapter || 0; document.getElementById('edit-task-modal').classList.remove('hidden'); };
       function getThaiDateISO() { const d = new Date(); const utc = d.getTime() + (d.getTimezoneOffset() * 60000); const bangkok = new Date(utc + (7 * 3600000)); return `${bangkok.getFullYear()}-${String(bangkok.getMonth()+1).padStart(2,'0')}-${String(bangkok.getDate()).padStart(2,'0')}`; }
