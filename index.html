@@ -589,7 +589,7 @@
               });
           }
 
-          if(pendingSubs.length === 0) { container.innerHTML = '<div class="text-center text-slate-500 py-10">ไม่มืองานรอตรวจ</div>'; return; }
+          if(pendingSubs.length === 0) { container.innerHTML = '<div class="text-center text-slate-500 py-10">ไม่มีงานที่รอตรวจ</div>'; return; }
 
           pendingSubs.sort((a,b) => new Date(b.timestampISO) - new Date(a.timestampISO)); 
 
