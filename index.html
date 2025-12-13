@@ -239,9 +239,10 @@
           // Check Login Session
           const savedSession = localStorage.getItem('wany_admin_session');
           if(savedSession) { 
-              showAdminPanel(true); // Auto Login
+              showAdminPanel(true); // ถ้ามี Session ครู ให้เข้าหน้าครู
           } else {
-              syncData();
+              switchMainTab('student'); // [แก้ไข] ถ้าไม่มี Session ให้เด้งหน้า "นักเรียน" ทันที
+              syncData(); // และโหลดข้อมูลเบื้องหลัง
           }
       });
 
