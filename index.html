@@ -15,19 +15,14 @@
       ::-webkit-scrollbar-track { background: #1e293b; }
       ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
       .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-      
       .status-box { transition: all 0.2s; }
       .status-none { background: rgba(51, 65, 85, 0.5); border: 1px dashed #475569; color: #94a3b8; }
       .status-done { background: #064e3b; border: 1px solid #059669; color: white; box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
-      
       .btn-score-active { background-color: #d97706 !important; color: white !important; border-color: #fbbf24 !important; transform: scale(1.05); box-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
-
       #toast-notification { transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s; }
       .toast-show { transform: translate(-50%, 0) !important; opacity: 1 !important; }
-      
       .fade-in { animation: fadeIn 0.3s ease-in-out; }
       @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      
       .badge-notify { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid white;}
   </style>
  </head>
@@ -39,7 +34,7 @@
      <div class="flex items-center gap-4">
       <img src="https://img2.pic.in.th/pic/Logoc404dc85753b800c.png" alt="School Logo" class="h-20 w-20 object-contain drop-shadow-md bg-white/10 rounded-full p-1 border border-slate-600">
       <div>
-        <h1 class="text-2xl font-bold text-white tracking-wide">WNY-Chinese<span class="text-red-500">Class</span> V9.1</h1>
+        <h1 class="text-2xl font-bold text-white tracking-wide">WNY-Chinese<span class="text-red-500">Class</span> V10 Pro</h1>
         <p class="text-slate-400 text-xs">ครูกีรติ ประสพพรรังสี - กลุ่มสาระการเรียนรู้ภาษาต่างประเทศ</p>
       </div>
      </div>
@@ -62,24 +57,18 @@
                 <form id="admin-login-form" class="space-y-4 w-full">
                     <input id="admin-username" type="text" placeholder="Username" class="w-full rounded-lg bg-slate-900/80 border border-slate-600 px-4 py-2 text-white">
                     <input id="admin-password" type="password" placeholder="Password" class="w-full rounded-lg bg-slate-900/80 border border-slate-600 px-4 py-2 text-white">
-                    <button type="submit" class="w-full py-3 rounded-lg bg-red-700 hover:bg-red-600 text-white font-bold shadow-lg">Login</button>
+                    <button type="submit" id="btn-login-submit" class="w-full py-3 rounded-lg bg-red-700 hover:bg-red-600 text-white font-bold shadow-lg">Login</button>
                 </form>
             </div>
         </div>
 
         <div id="admin-content-wrapper" class="hidden flex flex-col gap-5">
-            
             <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-xl border border-slate-700">
                 <div class="flex items-center gap-3">
                     <div class="h-10 w-10 rounded-full bg-red-700 flex items-center justify-center text-lg text-white font-bold shadow-md"><i class="fa-solid fa-user-tie"></i></div>
-                    <div>
-                        <h3 class="text-sm font-bold text-white">ผู้ดูแลระบบ (Admin)</h3>
-                        <p class="text-[10px] text-slate-400">สถานะ: <span class="text-green-400">เข้าสู่ระบบแล้ว</span></p>
-                    </div>
+                    <div><h3 class="text-sm font-bold text-white">ผู้ดูแลระบบ (Admin)</h3><p class="text-[10px] text-slate-400">สถานะ: <span class="text-green-400">Secure Active</span></p></div>
                 </div>
-                <button onclick="handleAdminLogout()" class="bg-slate-700 hover:bg-red-600 text-slate-300 hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition-all border border-slate-600">
-                    <i class="fa-solid fa-power-off mr-2"></i>ออกจากระบบ
-                </button>
+                <button onclick="handleAdminLogout()" class="bg-slate-700 hover:bg-red-600 text-slate-300 hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition-all border border-slate-600"><i class="fa-solid fa-power-off mr-2"></i>ออกจากระบบ</button>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 bg-slate-900/50 p-2 rounded-xl border border-slate-800">
@@ -87,10 +76,7 @@
                 <button onclick="switchAdminSubTab('scan')" id="menu-scan" class="menu-btn text-slate-400 hover:text-white"><i class="fa-solid fa-qrcode"></i> ให้คะแนน</button>
                 <button onclick="switchAdminSubTab('attendance')" id="menu-attendance" class="menu-btn text-slate-400 hover:text-white"><i class="fa-solid fa-user-check"></i> เช็คชื่อ</button>
                 <button onclick="switchAdminSubTab('check')" id="menu-check" class="menu-btn text-slate-400 hover:text-white"><i class="fa-solid fa-search"></i> ตรวจสอบ</button>
-                <button onclick="switchAdminSubTab('homework')" id="menu-homework" class="menu-btn text-slate-400 hover:text-white relative">
-                    <i class="fa-solid fa-list-check"></i> ตรวจงาน
-                    <span id="badge-homework" class="badge-notify hidden">0</span>
-                </button>
+                <button onclick="switchAdminSubTab('homework')" id="menu-homework" class="menu-btn text-slate-400 hover:text-white relative"><i class="fa-solid fa-list-check"></i> ตรวจงาน<span id="badge-homework" class="badge-notify hidden">0</span></button>
                 <button onclick="switchAdminSubTab('report')" id="menu-report" class="menu-btn text-slate-400 hover:text-white"><i class="fa-solid fa-chart-bar"></i> เกรด</button>
                 <button onclick="switchAdminSubTab('attreport')" id="menu-attreport" class="menu-btn text-slate-400 hover:text-white"><i class="fa-solid fa-table"></i> วันลา</button>
                 <button onclick="switchAdminSubTab('material')" id="menu-material" class="menu-btn text-slate-400 hover:text-white"><i class="fa-solid fa-book-open"></i> เนื้อหา</button>
@@ -122,7 +108,6 @@
                      <form id="form-task" class="space-y-3">
                         <div><label class="text-[10px] text-slate-400">1. เลือกรายวิชา</label><select id="task-subject-filter" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white" onchange="renderTaskClassCheckboxes()"><option value="">-- กรุณาเลือกวิชาก่อน --</option></select></div>
                         <div><label class="text-[10px] text-slate-400">2. เลือกห้องเรียน</label><div id="task-class-checkboxes" class="grid grid-cols-2 gap-2 bg-slate-900 border border-slate-600 rounded p-2 max-h-32 overflow-y-auto"><div class="text-xs text-slate-500 text-center col-span-2">- กรุณาเลือกวิชาด้านบนก่อน -</div></div></div>
-                        
                          <div class="grid grid-cols-2 gap-3">
                              <div><label class="text-[10px] text-slate-400">ประเภท</label><select id="task-category" class="w-full bg-slate-900 border border-amber-500 rounded px-2 py-2 text-xs text-amber-500 font-bold"><option value="accum">คะแนนเก็บ (60)</option><option value="midterm">กลางภาค (20)</option><option value="final">ปลายภาค (30)</option><option value="special">พิเศษ (5)</option></select></div>
                              <div id="chapter-wrapper"><label class="text-[10px] text-slate-400">บทที่</label><select id="task-chapter" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-xs text-white"><option value="1">บท 1</option><option value="2">บท 2</option><option value="3">บท 3</option><option value="4">บท 4</option><option value="5">บท 5</option><option value="6">บท 6</option></select></div>
@@ -138,102 +123,25 @@
             </section>
             
             <section id="admin-panel-homework" class="admin-panel hidden glass rounded-2xl p-5 flex flex-col gap-6">
-                <div class="flex justify-between items-center pb-4 border-b border-slate-700">
-                    <h3 class="text-xl font-bold text-white"><i class="fa-solid fa-list-check text-amber-500 mr-2"></i>รายการงานรอตรวจ (Inbox)</h3>
-                    <button onclick="renderIncomingSubmissions()" class="text-xs text-slate-400 hover:text-white"><i class="fa-solid fa-rotate mr-1"></i>รีเฟรช</button>
-                </div>
-                <div id="incoming-list" class="grid grid-cols-1 gap-3 overflow-y-auto max-h-[600px] pr-2">
+                <div class="flex flex-col md:flex-row justify-between items-end gap-3 pb-4 border-b border-slate-700">
+                    <div>
+                        <h3 class="text-xl font-bold text-white"><i class="fa-solid fa-list-check text-amber-500 mr-2"></i>ตรวจงาน (Inbox)</h3>
+                        <p class="text-xs text-slate-400">รายการที่ส่งเข้ามาและยังไม่มีคะแนน</p>
                     </div>
+                    <div class="flex gap-2">
+                        <select id="inbox-filter-class" class="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-white" onchange="renderIncomingSubmissions()"><option value="">ทุกห้อง</option></select>
+                        <button onclick="renderIncomingSubmissions()" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded"><i class="fa-solid fa-rotate mr-1"></i>รีเฟรช</button>
+                    </div>
+                </div>
+                <div id="incoming-list" class="grid grid-cols-1 gap-3 overflow-y-auto max-h-[600px] pr-2"></div>
             </section>
 
-            <section id="admin-panel-scan" class="admin-panel hidden glass rounded-2xl p-4 flex flex-col gap-4">
-                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full min-h-[500px]">
-                     <div class="lg:col-span-1 bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-4">
-                         <h3 class="font-bold text-white text-lg"><i class="fa-solid fa-qrcode mr-2"></i>ให้คะแนน (1-10)</h3>
-                         <div><label class="text-xs text-slate-400">1. เลือกงาน</label><select id="scan-class-select" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-xs text-white mb-2"></select><select id="scan-task-select" class="w-full bg-slate-900 border border-amber-600 rounded px-3 py-2 text-xs text-amber-500 font-bold"></select></div>
-                         <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-600 flex flex-col gap-2">
-                             <label class="text-xs text-slate-400">2. เลือกคะแนนรอไว้</label>
-                             <div id="score-buttons-container" class="grid grid-cols-5 gap-1"></div>
-                             <button onclick="setScoreMode('manual')" id="btn-score-manual" class="w-full py-2 rounded border border-slate-500 bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-bold btn-score-active mt-2">ระบุเอง / เกิน 10 (Max 30)</button>
-                         </div>
-                         <div><label class="text-xs text-slate-400 block mb-2">3. สแกนบาร์โค้ด</label><input id="scan-score-input" type="text" class="w-full bg-slate-900 border-2 border-slate-500 rounded-xl px-4 py-3 text-lg text-center text-white focus:border-red-500 outline-none" placeholder="พร้อมสแกน..."></div>
-                     </div>
-                     <div class="lg:col-span-3 bg-slate-900/40 p-4 rounded-xl border border-slate-700 flex flex-col">
-                        <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-slate-300">📋 รายชื่อคะแนน (Live Roster)</h3><div class="text-xs text-slate-400 flex gap-2"><span class="px-2 py-1 bg-green-900/50 text-green-400 rounded border border-green-800">มีคะแนนแล้ว</span><span class="px-2 py-1 bg-slate-800 text-slate-500 rounded border border-slate-600">ยังไม่มี</span></div></div>
-                        <div id="score-roster-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 overflow-y-auto max-h-[600px] p-1"><div class="col-span-full text-center text-slate-500 py-10">กรุณาเลือกห้องและงาน...</div></div>
-                     </div>
-                 </div>
-            </section>
-            
-            <section id="admin-panel-attendance" class="admin-panel hidden glass rounded-2xl p-4 flex flex-col gap-4">
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full min-h-[500px]">
-                    <div class="lg:col-span-1 bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-4">
-                        <h3 class="font-bold text-white text-lg"><i class="fa-solid fa-barcode"></i> เช็คชื่อ</h3>
-                        <div><label class="text-xs text-slate-400">ห้อง & วันที่</label><select id="att-class-select" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-white mb-2 mt-1"></select><input id="att-date-input" type="date" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-white font-mono"></div>
-                        <div class="space-y-2"><button onclick="setAttMode('มา')" id="btn-att-present" class="w-full py-3 rounded border border-green-600 bg-green-900/20 text-green-400 font-bold flex justify-between px-4"><span>มาเรียน</span> <i class="fa-solid fa-check"></i></button><button onclick="setAttMode('ลา')" id="btn-att-leave" class="w-full py-3 rounded border border-yellow-600 bg-yellow-900/20 text-yellow-400 font-bold flex justify-between px-4"><span>ลา</span> <i class="fa-solid fa-envelope"></i></button><button onclick="setAttMode('ขาด')" id="btn-att-absent" class="w-full py-3 rounded border border-red-600 bg-red-900/20 text-red-400 font-bold flex justify-between px-4"><span>ขาด</span> <i class="fa-solid fa-xmark"></i></button></div>
-                        <input id="att-scan-input" type="text" class="w-full bg-slate-900 border-2 border-slate-500 rounded-xl px-4 py-3 text-lg text-center text-white outline-none" placeholder="พร้อมสแกน..." disabled>
-                    </div>
-                    <div class="lg:col-span-3 bg-slate-900/40 p-4 rounded-xl border border-slate-700 flex flex-col">
-                        <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-slate-300">📋 รายชื่อ (Live)</h3></div>
-                        <div id="att-roster-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 overflow-y-auto max-h-[600px] p-1"></div>
-                    </div>
-                </div>
-            </section>
-            
-            <section id="admin-panel-check" class="admin-panel hidden glass rounded-2xl p-5 flex flex-col gap-6">
-                <div class="flex flex-col md:flex-row gap-3 items-center bg-slate-800/60 p-4 rounded-xl border border-slate-700">
-                    <select id="check-class-filter" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-3 text-white outline-none w-full md:w-auto" onchange="performCheck()"></select>
-                    <input id="check-student-input" type="text" class="flex-1 w-full bg-slate-900 border border-amber-500/50 rounded-lg px-4 py-3 text-white outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-center text-lg" placeholder="สแกนบัตร หรือพิมพ์ชื่อที่นี่ (ค้นหาอัตโนมัติ)" oninput="performCheck()" autofocus>
-                    <button onclick="performCheck()" class="hidden md:block bg-amber-600 text-white px-6 py-3 rounded-lg font-bold w-full md:w-auto">ตรวจสอบ</button>
-                </div>
-                <div id="check-result" class="hidden flex flex-col gap-5 fade-in">
-                    <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl border border-red-900/50 flex justify-between items-center shadow-lg">
-                        <div><h2 id="check-name" class="text-3xl font-bold text-white tracking-wide">-</h2><p id="check-class" class="text-amber-400 text-lg font-semibold mt-1">-</p></div>
-                        <div class="text-right bg-slate-900/50 p-3 rounded-xl border border-slate-700"><p class="text-xs text-slate-400">คะแนนเก็บรวม</p><p id="check-total-score" class="text-4xl font-bold text-green-400">0</p></div>
-                    </div>
-                    <div class="overflow-hidden bg-slate-800/40 rounded-xl border border-slate-700">
-                        <table class="min-w-full text-sm text-slate-300"><thead class="bg-slate-900 text-xs uppercase font-semibold text-slate-400"><tr><th class="px-4 py-3 text-left">งาน</th><th class="px-4 py-3 text-right">คะแนน</th></tr></thead><tbody id="check-table-body" class="divide-y divide-slate-700/50"></tbody></table>
-                    </div>
-                </div>
-            </section>
-
-            <section id="admin-panel-report" class="admin-panel hidden glass rounded-2xl p-5 flex flex-col gap-6">
-                 <div class="flex items-center justify-between"><h3 class="text-lg font-bold text-white">สรุปคะแนน</h3><button onclick="exportGradeCSV()" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold flex gap-2"><i class="fa-solid fa-file-csv"></i> CSV</button></div>
-                 <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700"><label class="text-xs text-slate-400 block mb-1">เลือกห้อง</label><select id="report-class" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-white"></select></div>
-                 <div class="overflow-x-auto bg-slate-800/40 rounded-xl border border-slate-700"><table class="min-w-full text-sm text-slate-300"><thead class="bg-slate-900 text-xs uppercase font-semibold text-slate-400"><tr><th class="px-2 py-3 text-center">#</th><th class="px-2 py-3 text-left min-w-[150px]">ชื่อ</th><th class="px-1 py-3 text-center text-amber-500">บท1</th><th class="px-1 py-3 text-center text-amber-500">บท2</th><th class="px-1 py-3 text-center text-amber-500">บท3</th><th class="px-1 py-3 text-center text-amber-500">บท4</th><th class="px-1 py-3 text-center text-amber-500">บท5</th><th class="px-1 py-3 text-center text-amber-500">บท6</th><th class="px-1 py-3 text-center text-blue-400">กลาง</th><th class="px-1 py-3 text-center text-purple-400">ปลาย</th><th class="px-2 py-3 text-center text-white font-bold border-l border-slate-700">รวม</th><th class="px-2 py-3 text-center">เกรด</th><th class="px-2 py-3 text-center text-pink-400 border-l border-slate-700">พิเศษ</th></tr></thead><tbody id="report-table-body" class="divide-y divide-slate-700/50"></tbody></table></div>
-            </section>
-
-            <section id="admin-panel-attreport" class="admin-panel hidden glass rounded-2xl p-5 flex flex-col gap-5">
-                <div class="flex flex-col md:flex-row justify-between items-end gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-                    <div class="flex gap-3 items-end w-full md:w-auto">
-                        <div><label class="text-xs text-slate-400 block mb-1">ห้อง</label><select id="report-att-class" class="bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-white min-w-[150px]"></select></div>
-                        <div><label class="text-xs text-slate-400 block mb-1">เดือน</label><input id="report-att-month" type="month" class="bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-white"></div>
-                        <button onclick="renderAttReportMatrix()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-bold h-[38px]">ค้นหา</button>
-                    </div>
-                    <button onclick="exportMatrixCSV()" class="bg-green-700 hover:bg-green-600 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 h-[38px]"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
-                </div>
-                <div class="overflow-x-auto bg-slate-900 border border-slate-700 rounded-xl shadow-inner"><table class="min-w-full text-sm text-left text-slate-300 whitespace-nowrap" id="att-matrix-table"><thead class="text-xs uppercase bg-slate-800 text-slate-400 sticky top-0 z-10 shadow"><tr id="att-matrix-header"></tr></thead><tbody id="att-matrix-body" class="divide-y divide-slate-700/50"></tbody></table></div>
-            </section>
-
-            <section id="admin-panel-material" class="admin-panel hidden glass rounded-2xl p-5 flex flex-col gap-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="md:col-span-1 bg-slate-800/50 p-4 rounded-xl border border-slate-700 h-fit">
-                        <h3 class="font-bold text-white mb-4 border-b border-slate-600 pb-2">เพิ่มเนื้อหาบทเรียน</h3>
-                        <form id="form-material" class="space-y-3">
-                            <div><label class="text-xs text-slate-400">วิชา</label><select id="mat-subject" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-sm text-white" required></select></div>
-                            <div><label class="text-xs text-slate-400">หัวข้อ / บทที่</label><input id="mat-title" type="text" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-sm text-white" placeholder="เช่น บทที่ 1 คำศัพท์ใหม่" required></div>
-                            <div><label class="text-xs text-slate-400">ประเภท</label><select id="mat-type" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-sm text-white"><option value="pdf">เอกสาร (PDF/Slide)</option><option value="video">วิดีโอ (YouTube)</option><option value="link">ลิงก์เว็บไซต์</option></select></div>
-                            <div><label class="text-xs text-slate-400">ลิงก์ (URL)</label><input id="mat-link" type="url" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-blue-300 text-sm" placeholder="https://..." required></div>
-                            <div><label class="text-xs text-slate-400">รายละเอียดเพิ่มเติม (Optional)</label><textarea id="mat-desc" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-sm text-white h-16 resize-none"></textarea></div>
-                            <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-white py-2 rounded font-bold shadow-lg mt-2">บันทึกเนื้อหา</button>
-                        </form>
-                    </div>
-                    <div class="md:col-span-2 flex flex-col gap-4">
-                        <div class="flex justify-between items-center"><h3 class="font-bold text-slate-300">รายการเนื้อหาที่มีอยู่</h3><select id="mat-filter-subject" class="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-white" onchange="renderAdminMaterials()"></select></div>
-                        <div id="admin-mat-list" class="grid grid-cols-1 gap-3 overflow-y-auto max-h-[600px] pr-2"></div>
-                    </div>
-                </div>
-            </section>
+            <section id="admin-panel-scan" class="admin-panel hidden glass rounded-2xl p-4 flex flex-col gap-4"><div class="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full min-h-[500px]"><div class="lg:col-span-1 bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-4"><h3 class="font-bold text-white text-lg"><i class="fa-solid fa-qrcode mr-2"></i>ให้คะแนน (1-10)</h3><div><label class="text-xs text-slate-400">1. เลือกงาน</label><select id="scan-class-select" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-xs text-white mb-2"></select><select id="scan-task-select" class="w-full bg-slate-900 border border-amber-600 rounded px-3 py-2 text-xs text-amber-500 font-bold"></select></div><div class="bg-slate-900/50 p-3 rounded-lg border border-slate-600 flex flex-col gap-2"><label class="text-xs text-slate-400">2. เลือกคะแนนรอไว้</label><div id="score-buttons-container" class="grid grid-cols-5 gap-1"></div><button onclick="setScoreMode('manual')" id="btn-score-manual" class="w-full py-2 rounded border border-slate-500 bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-bold btn-score-active mt-2">ระบุเอง / เกิน 10 (Max 30)</button></div><div><label class="text-xs text-slate-400 block mb-2">3. สแกนบาร์โค้ด</label><input id="scan-score-input" type="text" class="w-full bg-slate-900 border-2 border-slate-500 rounded-xl px-4 py-3 text-lg text-center text-white focus:border-red-500 outline-none" placeholder="พร้อมสแกน..."></div></div><div class="lg:col-span-3 bg-slate-900/40 p-4 rounded-xl border border-slate-700 flex flex-col"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-slate-300">📋 รายชื่อคะแนน (Live Roster)</h3><div class="text-xs text-slate-400 flex gap-2"><span class="px-2 py-1 bg-green-900/50 text-green-400 rounded border border-green-800">มีคะแนนแล้ว</span><span class="px-2 py-1 bg-slate-800 text-slate-500 rounded border border-slate-600">ยังไม่มี</span></div></div><div id="score-roster-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 overflow-y-auto max-h-[600px] p-1"><div class="col-span-full text-center text-slate-500 py-10">กรุณาเลือกห้องและงาน...</div></div></div></div></section>
+            <section id="admin-panel-attendance" class="admin-panel hidden glass rounded-2xl p-4 flex flex-col gap-4"><div class="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full min-h-[500px]"><div class="lg:col-span-1 bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-4"><h3 class="font-bold text-white text-lg"><i class="fa-solid fa-barcode"></i> เช็คชื่อ</h3><div><label class="text-xs text-slate-400">ห้อง & วันที่</label><select id="att-class-select" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-white mb-2 mt-1"></select><input id="att-date-input" type="date" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-white font-mono"></div><div class="space-y-2"><button onclick="setAttMode('มา')" id="btn-att-present" class="w-full py-3 rounded border border-green-600 bg-green-900/20 text-green-400 font-bold flex justify-between px-4"><span>มาเรียน</span> <i class="fa-solid fa-check"></i></button><button onclick="setAttMode('ลา')" id="btn-att-leave" class="w-full py-3 rounded border border-yellow-600 bg-yellow-900/20 text-yellow-400 font-bold flex justify-between px-4"><span>ลา</span> <i class="fa-solid fa-envelope"></i></button><button onclick="setAttMode('ขาด')" id="btn-att-absent" class="w-full py-3 rounded border border-red-600 bg-red-900/20 text-red-400 font-bold flex justify-between px-4"><span>ขาด</span> <i class="fa-solid fa-xmark"></i></button></div><input id="att-scan-input" type="text" class="w-full bg-slate-900 border-2 border-slate-500 rounded-xl px-4 py-3 text-lg text-center text-white outline-none" placeholder="พร้อมสแกน..." disabled></div><div class="lg:col-span-3 bg-slate-900/40 p-4 rounded-xl border border-slate-700 flex flex-col"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-slate-300">📋 รายชื่อ (Live)</h3></div><div id="att-roster-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 overflow-y-auto max-h-[600px] p-1"></div></div></div></section>
+            <section id="admin-panel-check" class="admin-panel hidden glass rounded-2xl p-5 flex flex-col gap-6"><div class="flex flex-col md:flex-row gap-3 items-center bg-slate-800/60 p-4 rounded-xl border border-slate-700"><select id="check-class-filter" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-3 text-white outline-none w-full md:w-auto" onchange="performCheck()"></select><input id="check-student-input" type="text" class="flex-1 w-full bg-slate-900 border border-amber-500/50 rounded-lg px-4 py-3 text-white outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-center text-lg" placeholder="สแกนบัตร หรือพิมพ์ชื่อที่นี่ (ค้นหาอัตโนมัติ)" oninput="performCheck()" autofocus><button onclick="performCheck()" class="hidden md:block bg-amber-600 text-white px-6 py-3 rounded-lg font-bold w-full md:w-auto">ตรวจสอบ</button></div><div id="check-result" class="hidden flex flex-col gap-5 fade-in"><div class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl border border-red-900/50 flex justify-between items-center shadow-lg"><div><h2 id="check-name" class="text-3xl font-bold text-white tracking-wide">-</h2><p id="check-class" class="text-amber-400 text-lg font-semibold mt-1">-</p></div><div class="text-right bg-slate-900/50 p-3 rounded-xl border border-slate-700"><p class="text-xs text-slate-400">คะแนนเก็บรวม</p><p id="check-total-score" class="text-4xl font-bold text-green-400">0</p></div></div><div class="overflow-hidden bg-slate-800/40 rounded-xl border border-slate-700"><table class="min-w-full text-sm text-slate-300"><thead class="bg-slate-900 text-xs uppercase font-semibold text-slate-400"><tr><th class="px-4 py-3 text-left">งาน</th><th class="px-4 py-3 text-right">คะแนน</th></tr></thead><tbody id="check-table-body" class="divide-y divide-slate-700/50"></tbody></table></div></div></section>
+            <section id="admin-panel-report" class="admin-panel hidden glass rounded-2xl p-5 flex flex-col gap-6"><div class="flex items-center justify-between"><h3 class="text-lg font-bold text-white">สรุปคะแนน</h3><button onclick="exportGradeCSV()" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold flex gap-2"><i class="fa-solid fa-file-csv"></i> CSV</button></div><div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700"><label class="text-xs text-slate-400 block mb-1">เลือกห้อง</label><select id="report-class" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-white"></select></div><div class="overflow-x-auto bg-slate-800/40 rounded-xl border border-slate-700"><table class="min-w-full text-sm text-slate-300"><thead class="bg-slate-900 text-xs uppercase font-semibold text-slate-400"><tr><th class="px-2 py-3 text-center">#</th><th class="px-2 py-3 text-left min-w-[150px]">ชื่อ</th><th class="px-1 py-3 text-center text-amber-500">บท1</th><th class="px-1 py-3 text-center text-amber-500">บท2</th><th class="px-1 py-3 text-center text-amber-500">บท3</th><th class="px-1 py-3 text-center text-amber-500">บท4</th><th class="px-1 py-3 text-center text-amber-500">บท5</th><th class="px-1 py-3 text-center text-amber-500">บท6</th><th class="px-1 py-3 text-center text-blue-400">กลาง</th><th class="px-1 py-3 text-center text-purple-400">ปลาย</th><th class="px-2 py-3 text-center text-white font-bold border-l border-slate-700">รวม</th><th class="px-2 py-3 text-center">เกรด</th><th class="px-2 py-3 text-center text-pink-400 border-l border-slate-700">พิเศษ</th></tr></thead><tbody id="report-table-body" class="divide-y divide-slate-700/50"></tbody></table></div></section>
+            <section id="admin-panel-attreport" class="admin-panel hidden glass rounded-2xl p-5 flex flex-col gap-5"><div class="flex flex-col md:flex-row justify-between items-end gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700"><div class="flex gap-3 items-end w-full md:w-auto"><div><label class="text-xs text-slate-400 block mb-1">ห้อง</label><select id="report-att-class" class="bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-white min-w-[150px]"></select></div><div><label class="text-xs text-slate-400 block mb-1">เดือน</label><input id="report-att-month" type="month" class="bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-white"></div><button onclick="renderAttReportMatrix()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-bold h-[38px]">ค้นหา</button></div><button onclick="exportMatrixCSV()" class="bg-green-700 hover:bg-green-600 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 h-[38px]"><i class="fa-solid fa-file-csv"></i> Export CSV</button></div><div class="overflow-x-auto bg-slate-900 border border-slate-700 rounded-xl shadow-inner"><table class="min-w-full text-sm text-left text-slate-300 whitespace-nowrap" id="att-matrix-table"><thead class="text-xs uppercase bg-slate-800 text-slate-400 sticky top-0 z-10 shadow"><tr id="att-matrix-header"></tr></thead><tbody id="att-matrix-body" class="divide-y divide-slate-700/50"></tbody></table></div></section>
+            <section id="admin-panel-material" class="admin-panel hidden glass rounded-2xl p-5 flex flex-col gap-6"><div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="md:col-span-1 bg-slate-800/50 p-4 rounded-xl border border-slate-700 h-fit"><h3 class="font-bold text-white mb-4 border-b border-slate-600 pb-2">เพิ่มเนื้อหาบทเรียน</h3><form id="form-material" class="space-y-3"><div><label class="text-xs text-slate-400">วิชา</label><select id="mat-subject" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-sm text-white" required></select></div><div><label class="text-xs text-slate-400">หัวข้อ / บทที่</label><input id="mat-title" type="text" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-sm text-white" placeholder="เช่น บทที่ 1 คำศัพท์ใหม่" required></div><div><label class="text-xs text-slate-400">ประเภท</label><select id="mat-type" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-sm text-white"><option value="pdf">เอกสาร (PDF/Slide)</option><option value="video">วิดีโอ (YouTube)</option><option value="link">ลิงก์เว็บไซต์</option></select></div><div><label class="text-xs text-slate-400">ลิงก์ (URL)</label><input id="mat-link" type="url" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-blue-300 text-sm" placeholder="https://..." required></div><div><label class="text-xs text-slate-400">รายละเอียดเพิ่มเติม (Optional)</label><textarea id="mat-desc" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 text-sm text-white h-16 resize-none"></textarea></div><button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-white py-2 rounded font-bold shadow-lg mt-2">บันทึกเนื้อหา</button></form></div><div class="md:col-span-2 flex flex-col gap-4"><div class="flex justify-between items-center"><h3 class="font-bold text-slate-300">รายการเนื้อหาที่มีอยู่</h3><select id="mat-filter-subject" class="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-white" onchange="renderAdminMaterials()"></select></div><div id="admin-mat-list" class="grid grid-cols-1 gap-3 overflow-y-auto max-h-[600px] pr-2"></div></div></div></section>
         </div>
       </div>
 
@@ -281,7 +189,8 @@
             <p class="text-slate-400 text-sm mb-1 text-center" id="modal-task-name"></p>
             <p class="text-amber-400 text-lg font-bold mb-4 text-center" id="modal-student-name"></p>
             <div class="relative"><input id="modal-score-input" type="number" class="w-full bg-slate-950 border-2 border-red-500 rounded-xl px-4 py-4 text-3xl text-center text-white font-bold focus:outline-none"><span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">/ <span id="modal-max-score"></span></span></div>
-            <div class="grid grid-cols-2 gap-3 mt-6"><button onclick="document.getElementById('score-modal').classList.add('hidden')" class="py-2 rounded-lg bg-slate-800 text-slate-300">ยกเลิก</button><button id="btn-modal-save" class="py-2 rounded-lg bg-red-700 text-white font-bold">บันทึก (Enter)</button></div>
+            <textarea id="modal-score-feedback" class="w-full bg-slate-800 border border-slate-700 rounded-lg mt-4 p-2 text-sm text-white h-20 resize-none" placeholder="ข้อเสนอแนะ / คำชม (Optional)"></textarea>
+            <div class="grid grid-cols-2 gap-3 mt-4"><button onclick="document.getElementById('score-modal').classList.add('hidden')" class="py-2 rounded-lg bg-slate-800 text-slate-300">ยกเลิก</button><button id="btn-modal-save" class="py-2 rounded-lg bg-red-700 text-white font-bold">บันทึก (Enter)</button></div>
         </div>
     </div>
 
@@ -309,11 +218,7 @@
   </div>
 
   <script>
-      // ***********************************************
-      // CONFIGURATION
-      // ***********************************************
       const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQNjMSE06u5xO4dtyipa5P-YzoaicppubdwlUgMpaX4L4TUjk3-xY2PRnzhS42AxZe/exec"; 
-      // ***********************************************
 
       let dataState = { subjects:[], classes:[], students:[], tasks:[], scores:[], attendance:[], materials:[], submissions:[] };
       let attMode = null; 
@@ -325,8 +230,9 @@
           document.getElementById('report-att-month').value = bangkokDate.slice(0, 7);
           renderScoreButtons(); 
           initEventListeners();
+          // Login Check (Using Token now logic can be expanded)
           const savedSession = localStorage.getItem('wany_admin_session');
-          if(savedSession === 'active') { showAdminPanel(true); } else { syncData(); }
+          if(savedSession) { showAdminPanel(true); } else { syncData(); }
       });
 
       async function syncData() {
@@ -360,22 +266,29 @@
       async function saveAndRefresh(payload) {
           updateLocalState(payload);
           refreshSpecificUI(payload);
-          try { await fetch(GOOGLE_SCRIPT_URL, { method:'POST', body:JSON.stringify(payload) }); } 
-          catch(e) { console.error("Save failed", e); alert("บันทึกข้อมูลล้มเหลว!"); }
+          try { 
+              const res = await fetch(GOOGLE_SCRIPT_URL, { method:'POST', body:JSON.stringify(payload) });
+              // For Login
+              if(payload.action === 'login') {
+                  const json = await res.json();
+                  return json;
+              }
+          } 
+          catch(e) { console.error("Save failed", e); alert("เชื่อมต่อผิดพลาด!"); return {status:'error'}; }
       }
 
       function updateLocalState(p) {
           if(p.action === 'addSubject') dataState.subjects.push({id:p.id, name:p.name});
           if(p.action === 'addClass') dataState.classes.push({id:p.id, name:p.name, subjectId:p.subjectId});
           if(p.action === 'addStudent') dataState.students.push({id:p.id, classId:p.classId, no:p.no, code:p.code, name:p.name});
-          // Optimistic addTask (Multiple)
-          if(p.action === 'addTask') {
-             // Logic moved to event listener to handle loop
-          }
+          // Optimistic addTask (Multiple handled in loop)
           if(p.action === 'addScore') {
               const idx = dataState.scores.findIndex(s => s.studentId == p.studentId && s.taskId == p.taskId);
-              if(idx >= 0) dataState.scores[idx].score = p.score;
-              else dataState.scores.push({studentId:p.studentId, taskId:p.taskId, score:p.score});
+              if(idx >= 0) { 
+                  dataState.scores[idx].score = p.score; 
+                  dataState.scores[idx].feedback = p.feedback || ''; 
+              }
+              else dataState.scores.push({studentId:p.studentId, taskId:p.taskId, score:p.score, feedback: p.feedback || ''});
           }
           if(p.action === 'submitTask') {
               const idx = dataState.submissions.findIndex(s => s.studentId == p.studentId && s.taskId == p.taskId);
@@ -389,7 +302,6 @@
           }
           if(p.action === 'addMaterial') dataState.materials.push({id: p.id, subjectId: p.subjectId, title: p.title, link: p.link, type: p.type, desc: p.desc});
           if(p.action === 'deleteMaterial') dataState.materials = dataState.materials.filter(m => m.id != p.id);
-          
           updateInboxBadge();
       }
 
@@ -398,53 +310,47 @@
           if(p.action === 'addTask') { updateScanTaskDropdown(); }
           if(p.action === 'addScore') { renderScoreRoster(); renderIncomingSubmissions(); }
           if(p.action === 'addMaterial' || p.action === 'deleteMaterial') { renderAdminMaterials(); }
-          if(p.action === 'submitTask') { /* Refresh Student UI handled in function */ }
       }
 
-      // --- UI HELPERS ---
+      // --- AUTH ---
       function showAdminPanel(isAutoLogin = false) {
           document.getElementById('admin-login-wrapper').classList.add('hidden');
           document.getElementById('admin-content-wrapper').classList.remove('hidden');
-          document.getElementById('tab-btn-admin').className="px-5 py-2 rounded-full text-sm font-semibold text-white bg-red-700 shadow-lg transition-all";
-          document.getElementById('tab-btn-student').className="px-5 py-2 rounded-full text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-all";
-          
-          localStorage.setItem('wany_admin_session', 'active');
           refreshUI(); 
           let currentPanel = 'attendance';
           document.querySelectorAll('.admin-panel').forEach(p => { if(!p.classList.contains('hidden')) currentPanel = p.id.replace('admin-panel-', ''); });
           switchAdminSubTab(currentPanel);
-          if(!isAutoLogin) syncData(); 
+          syncData(); 
       }
       function handleAdminLogout() {
           if(!confirm("ต้องการออกจากระบบ?")) return;
           localStorage.removeItem('wany_admin_session');
           location.reload();
       }
-      function refreshDropdowns() {
-          const populate = (id, arr) => {
-              const el = document.getElementById(id); if(!el) return;
-              el.innerHTML = '<option value="">-- เลือก --</option>';
-              [...arr].sort((a,b)=>a.name.localeCompare(b.name)).forEach(i=>{ const opt = document.createElement('option'); opt.value=i.id; opt.textContent=i.name; el.appendChild(opt); });
-          };
-          populate('class-subject-ref', dataState.subjects);
-          populate('student-class', dataState.classes);
-          populate('scan-class-select', dataState.classes);
-          populate('att-class-select', dataState.classes);
-          populate('check-class-filter', dataState.classes);
-          populate('report-class', dataState.classes);
-          populate('report-att-class', dataState.classes);
-          populate('mat-subject', dataState.subjects);
-          populate('mat-filter-subject', dataState.subjects);
-          populate('task-subject-filter', dataState.subjects); 
-      }
 
       function initEventListeners() {
-          document.getElementById('admin-login-form').onsubmit = (e) => { e.preventDefault(); if(document.getElementById('admin-username').value === 'admin' && document.getElementById('admin-password').value === 'admin290936') { showAdminPanel(); } else alert("รหัสผิด"); };
+          // [UPDATE] Admin Login with Server Check
+          document.getElementById('admin-login-form').onsubmit = async (e) => {
+              e.preventDefault();
+              const u = document.getElementById('admin-username').value;
+              const p = document.getElementById('admin-password').value;
+              const btn = document.getElementById('btn-login-submit');
+              btn.textContent = "Checking..."; btn.disabled = true;
+              
+              const res = await saveAndRefresh({ action: 'login', username: u, password: p });
+              if(res && res.status === 'success') {
+                  localStorage.setItem('wany_admin_session', res.token);
+                  showAdminPanel();
+              } else {
+                  alert("❌ รหัสผ่านไม่ถูกต้อง");
+                  btn.textContent = "Login"; btn.disabled = false;
+              }
+          };
+
           document.getElementById('form-subject').onsubmit = (e) => { e.preventDefault(); saveAndRefresh({ action:'addSubject', id:Date.now(), name:document.getElementById('subject-name').value }); e.target.reset(); alert("เพิ่มวิชาแล้ว"); };
           document.getElementById('form-class').onsubmit = (e) => { e.preventDefault(); saveAndRefresh({ action:'addClass', id:Date.now(), name:document.getElementById('class-name').value, subjectId:document.getElementById('class-subject-ref').value }); e.target.reset(); alert("เพิ่มห้องแล้ว"); };
           document.getElementById('form-student').onsubmit = (e) => { e.preventDefault(); saveAndRefresh({ action: 'addStudent', id: Date.now(), classId: document.getElementById('student-class').value, no: document.getElementById('student-no').value, code: document.getElementById('student-id').value, name: document.getElementById('student-name').value }); e.target.reset(); alert("เพิ่มนักเรียนแล้ว"); };
           
-          // [NEW] Multi-class Task Add
           document.getElementById('form-task').onsubmit = (e) => { 
               e.preventDefault(); 
               const checkboxes = document.querySelectorAll('input[name="selectedClasses"]:checked');
@@ -459,6 +365,7 @@
                   name: document.getElementById('task-name').value, maxScore: document.getElementById('task-max').value, 
                   dueDateISO: getThaiDateISO(), description: document.getElementById('task-desc').value, fileLink: document.getElementById('task-link').value 
               };
+              // Optimistic push
               selectedClassIds.forEach((cid, index) => {
                   dataState.tasks.push({ id: baseId + index, classId: cid, subjectId: subId, category: payload.category, chapter: payload.chapter, name: payload.name, maxScore: payload.maxScore, dueDateISO: payload.dueDateISO, description: payload.description, fileLink: payload.fileLink });
               });
@@ -467,14 +374,12 @@
               showToast(`สร้างงานเรียบร้อย (${selectedClassIds.length} ห้อง)`);
           };
 
-          // [NEW] Form Material
           document.getElementById('form-material').onsubmit = (e) => {
               e.preventDefault();
               saveAndRefresh({ action: 'addMaterial', id: Date.now(), subjectId: document.getElementById('mat-subject').value, title: document.getElementById('mat-title').value, type: document.getElementById('mat-type').value, link: document.getElementById('mat-link').value, desc: document.getElementById('mat-desc').value });
               e.target.reset(); showToast("เพิ่มเนื้อหาสำเร็จ");
           };
           
-          // [NEW] Form Student Submit
           document.getElementById('form-submit-work').onsubmit = (e) => {
               e.preventDefault();
               const tid = document.getElementById('submit-task-id').value;
@@ -483,7 +388,6 @@
               saveAndRefresh({ action: 'submitTask', taskId: tid, studentId: sid, link: link });
               document.getElementById('submit-modal').classList.add('hidden');
               showToast("ส่งงานเรียบร้อย");
-              // Re-render Student UI if visible
               if(!document.getElementById('student-dashboard').classList.contains('hidden')) {
                   setTimeout(handleStudentLogin, 100); 
               }
@@ -504,23 +408,7 @@
           document.getElementById('student-login-id').onkeydown = (e) => { if(e.key === 'Enter') handleStudentLogin(); };
       }
 
-      // --- NEW FUNCTION: Multi-Class Task Checkboxes ---
-      window.renderTaskClassCheckboxes = function() {
-          const subId = document.getElementById('task-subject-filter').value;
-          const container = document.getElementById('task-class-checkboxes');
-          container.innerHTML = '';
-          if (!subId) { container.innerHTML = '<div class="text-xs text-slate-500 text-center col-span-2">- กรุณาเลือกวิชาก่อน -</div>'; return; }
-          const classes = dataState.classes.filter(c => c.subjectId == subId);
-          if (classes.length === 0) { container.innerHTML = '<div class="text-xs text-red-400 text-center col-span-2">ไม่พบห้องเรียนในวิชานี้</div>'; return; }
-          classes.forEach(c => {
-              const wrapper = document.createElement('label');
-              wrapper.className = "flex items-center space-x-2 bg-slate-800 p-2 rounded cursor-pointer hover:bg-slate-700 border border-slate-700";
-              wrapper.innerHTML = `<input type="checkbox" name="selectedClasses" value="${c.id}" class="accent-amber-500 w-4 h-4 rounded"><span class="text-xs text-white font-bold">${c.name}</span>`;
-              container.appendChild(wrapper);
-          });
-      };
-
-      // --- INBOX / GRADING LOGIC ---
+      // --- INBOX / GRADING LOGIC (UPDATED) ---
       function updateInboxBadge() {
            let count = 0;
            dataState.submissions.forEach(sub => {
@@ -534,10 +422,19 @@
 
       window.renderIncomingSubmissions = function() {
           const container = document.getElementById('incoming-list');
+          const filterClassId = document.getElementById('inbox-filter-class').value;
           container.innerHTML = '';
-          const pendingSubs = dataState.submissions.filter(sub => {
+          
+          let pendingSubs = dataState.submissions.filter(sub => {
                return !dataState.scores.some(sc => sc.taskId == sub.taskId && sc.studentId == sub.studentId);
           });
+
+          if(filterClassId) {
+              pendingSubs = pendingSubs.filter(sub => {
+                  const s = dataState.students.find(st => st.id == sub.studentId);
+                  return s && s.classId == filterClassId;
+              });
+          }
 
           if(pendingSubs.length === 0) { container.innerHTML = '<div class="text-center text-slate-500 py-10">ไม่มืองานรอตรวจ</div>'; return; }
 
@@ -560,12 +457,19 @@
                       </div>
                       <h4 class="font-bold text-white text-sm">${task.name} <span class="text-slate-500 text-xs">(${task.maxScore} คะแนน)</span></h4>
                       <p class="text-xs text-amber-400 font-bold mb-2">${student.name} (เลขที่ ${student.no})</p>
-                      <a href="${sub.link}" target="_blank" class="text-blue-400 text-xs hover:underline flex items-center gap-1"><i class="fa-solid fa-up-right-from-square"></i> เปิดลิงก์งาน</a>
+                      
+                      <div class="flex gap-3 mt-2">
+                          <a href="${sub.link}" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-blue-300 px-3 py-1 rounded text-xs flex items-center gap-1 border border-slate-600"><i class="fa-solid fa-link"></i> ลิงก์งานที่ส่ง</a>
+                          ${task.fileLink ? `<a href="${task.fileLink}" target="_blank" class="bg-slate-900 text-slate-400 px-3 py-1 rounded text-xs flex items-center gap-1 border border-slate-700"><i class="fa-solid fa-file-pdf"></i> โจทย์</a>` : ''}
+                      </div>
                   </div>
-                  <div class="flex items-center gap-2 w-full md:w-auto bg-slate-900/50 p-2 rounded-lg border border-slate-700">
-                      <input id="grade-input-${sub.id}" type="number" class="w-16 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-center text-white font-bold" placeholder="0">
-                      <span class="text-slate-500 text-xs">/${task.maxScore}</span>
-                      <button onclick="submitGrade('${sub.id}', '${sub.studentId}', '${sub.taskId}', ${task.maxScore})" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-xs font-bold ml-2">บันทึก</button>
+                  <div class="flex flex-col gap-2 w-full md:w-auto bg-slate-900/50 p-3 rounded-lg border border-slate-700">
+                      <div class="flex items-center gap-2">
+                          <input id="grade-input-${sub.id}" type="number" class="w-16 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-center text-white font-bold" placeholder="0">
+                          <span class="text-slate-500 text-xs">/${task.maxScore}</span>
+                      </div>
+                      <input id="feedback-input-${sub.id}" type="text" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white" placeholder="คอมเมนต์...">
+                      <button onclick="submitGrade('${sub.id}', '${sub.studentId}', '${sub.taskId}', ${task.maxScore})" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-xs font-bold w-full">บันทึกผล</button>
                   </div>
               `;
               container.appendChild(div);
@@ -574,15 +478,37 @@
 
       window.submitGrade = function(subId, sid, tid, max) {
           const val = document.getElementById(`grade-input-${subId}`).value;
+          const fb = document.getElementById(`feedback-input-${subId}`).value;
           if(val === '') return alert("กรุณาใส่คะแนน");
           if(Number(val) > Number(max)) return alert("คะแนนเกินเต็ม");
           
-          saveAndRefresh({ action:'addScore', studentId: sid, taskId: tid, score: val });
+          saveAndRefresh({ action:'addScore', studentId: sid, taskId: tid, score: val, feedback: fb });
           showToast("บันทึกคะแนนเรียบร้อย");
           renderIncomingSubmissions();
       };
 
-      // --- EXISTING UTILS (FIXED SYNTAX) ---
+      // --- GENERAL & UTILS ---
+      function refreshDropdowns() {
+          const populate = (id, arr) => {
+              const el = document.getElementById(id); if(!el) return;
+              const current = el.value;
+              el.innerHTML = '<option value="">-- เลือก --</option>';
+              [...arr].sort((a,b)=>a.name.localeCompare(b.name)).forEach(i=>{ const opt = document.createElement('option'); opt.value=i.id; opt.textContent=i.name; el.appendChild(opt); });
+              if(current) el.value = current;
+          };
+          populate('class-subject-ref', dataState.subjects);
+          populate('student-class', dataState.classes);
+          populate('scan-class-select', dataState.classes);
+          populate('att-class-select', dataState.classes);
+          populate('check-class-filter', dataState.classes);
+          populate('report-class', dataState.classes);
+          populate('report-att-class', dataState.classes);
+          populate('mat-subject', dataState.subjects);
+          populate('mat-filter-subject', dataState.subjects);
+          populate('task-subject-filter', dataState.subjects);
+          populate('inbox-filter-class', dataState.classes); // [NEW] Inbox Filter
+      }
+
       function updateScanTaskDropdown() {
           const cid = document.getElementById('scan-class-select').value;
           const el = document.getElementById('scan-task-select'); 
@@ -601,8 +527,27 @@
           document.getElementById('scan-score-input').value = '';
       }
       function saveScoreDirectly(s, t, val) { saveAndRefresh({ action:'addScore', studentId: s.id, taskId: t.id, score: val }); showToast(`บันทึก ${s.no}.${s.name} : ${val} คะแนน`); }
-      function openScoreModalForStudent(s, t) { window.pendingScore = { s, t }; document.getElementById('score-modal').classList.remove('hidden'); document.getElementById('modal-task-name').textContent = t.name; document.getElementById('modal-student-name').textContent = `เลขที่ ${s.no} ${s.name}`; document.getElementById('modal-max-score').textContent = t.maxScore; const exist = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id); const inp = document.getElementById('modal-score-input'); inp.value = exist ? exist.score : t.maxScore; setTimeout(() => inp.select(), 100); }
-      function saveScoreFromModal() { const val = document.getElementById('modal-score-input').value; const { s, t } = window.pendingScore; if(Number(val) > 30) return alert("max 30"); if(Number(val) > Number(t.maxScore)) return alert("คะแนนเกินเต็ม"); saveScoreDirectly(s, t, val); document.getElementById('score-modal').classList.add('hidden'); }
+      function openScoreModalForStudent(s, t) { 
+          window.pendingScore = { s, t }; 
+          document.getElementById('score-modal').classList.remove('hidden'); 
+          document.getElementById('modal-task-name').textContent = t.name; 
+          document.getElementById('modal-student-name').textContent = `เลขที่ ${s.no} ${s.name}`; 
+          document.getElementById('modal-max-score').textContent = t.maxScore; 
+          
+          const exist = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id); 
+          document.getElementById('modal-score-input').value = exist ? exist.score : ''; 
+          document.getElementById('modal-score-feedback').value = exist ? exist.feedback || '' : ''; // Load feedback
+          setTimeout(() => document.getElementById('modal-score-input').focus(), 100); 
+      }
+      function saveScoreFromModal() { 
+          const val = document.getElementById('modal-score-input').value; 
+          const fb = document.getElementById('modal-score-feedback').value;
+          const { s, t } = window.pendingScore; 
+          if(Number(val) > Number(t.maxScore)) return alert("คะแนนเกินเต็ม"); 
+          saveAndRefresh({ action:'addScore', studentId: s.id, taskId: t.id, score: val, feedback: fb }); 
+          document.getElementById('score-modal').classList.add('hidden'); 
+          showToast("บันทึกแล้ว");
+      }
       
       window.renderScoreRoster = function() { 
           const cid = document.getElementById('scan-class-select').value; 
@@ -619,76 +564,32 @@
               const el = document.createElement('div'); 
               el.className = `status-box ${hasScore ? 'status-done' : 'status-none'} p-2 rounded-lg flex flex-col items-center justify-center cursor-pointer select-none border border-slate-700`; 
               el.onclick = () => openScoreModalForStudent(s, task); 
-              // Fixed Syntax Here
               el.innerHTML = `<div class="text-xs opacity-70 mb-1">No. ${s.no||'-'}</div><div class="font-bold text-center text-xs truncate w-full px-1">${s.name}</div><div class="text-lg font-bold mt-1 text-white">${val} <span class="text-[10px] text-slate-400 font-normal">/${task.maxScore}</span></div>`; 
               div.appendChild(el); 
           }); 
       };
       
+      // ... (Rest of Att functions, Report functions same as V9) ...
+      // For brevity, skipping repeated boilerplate. Just ensure existing report logic is here.
+      // (Copy paste Att/Report logic from previous version here)
       function handleAttScan(code) { if(!attMode) return; const cid = document.getElementById('att-class-select').value; const s = dataState.students.find(x => x.code == code && x.classId == cid); if(!s) return alert("ไม่พบ/ผิดห้อง"); processAtt(s); }
       function manualAtt(s) { if(!attMode) return alert("เลือกสถานะก่อน"); processAtt(s); }
-      function processAtt(s) { 
-          const date = document.getElementById('att-date-input').value; 
-          const card = document.getElementById(`card-${s.id}`); 
-          if(card) { 
-              card.className = `status-box status-${attMode} p-3 rounded-lg flex flex-col items-center justify-center cursor-pointer select-none transition-transform scale-105`; 
-              card.querySelector('.status-text').textContent = attMode; 
-              setTimeout(()=>card.classList.remove('scale-105'), 200); 
-          } 
-          saveAndRefresh({ action:'addAttendance', studentId:s.id, classId:s.classId, date:date, status:attMode }); 
-      }
-      
-      function renderLiveRoster() { 
-          const cid = document.getElementById('att-class-select').value; 
-          const date = document.getElementById('att-date-input').value; 
-          const div = document.getElementById('att-roster-grid'); 
-          div.innerHTML = ''; 
-          if(!cid) return; 
-          const list = dataState.students.filter(s=>s.classId==cid).sort((a,b)=>(Number(a.no)||0)-(Number(b.no)||0)); 
-          list.forEach(s => { 
-              const log = dataState.attendance.find(a => a.studentId==s.id && formatThaiDate(a.date) == formatThaiDate(date)); 
-              const st = log ? log.status : 'none'; 
-              const el = document.createElement('div'); 
-              el.id = `card-${s.id}`; 
-              el.className = `status-box status-${st} p-3 rounded-lg flex flex-col items-center justify-center cursor-pointer select-none`; 
-              el.onclick = () => manualAtt(s); 
-              // Fixed Syntax Here
-              el.innerHTML = `<div class="text-xs opacity-70 mb-1">No. ${s.no||'-'}</div><div class="font-bold text-center text-sm">${s.name}</div><div class="text-[10px] mt-1 opacity-80 status-text">${st==='none'?'รอเช็ค':st}</div>`; 
-              div.appendChild(el); 
-          }); 
-      }
-      
-      // [SAME] Report functions
+      function processAtt(s) { const date = document.getElementById('att-date-input').value; const card = document.getElementById(`card-${s.id}`); if(card) { card.className = `status-box status-${attMode} p-3 rounded-lg flex flex-col items-center justify-center cursor-pointer select-none transition-transform scale-105`; card.querySelector('.status-text').textContent = attMode; setTimeout(()=>card.classList.remove('scale-105'), 200); } saveAndRefresh({ action:'addAttendance', studentId:s.id, classId:s.classId, date:date, status:attMode }); }
+      function renderLiveRoster() { const cid = document.getElementById('att-class-select').value; const date = document.getElementById('att-date-input').value; const div = document.getElementById('att-roster-grid'); div.innerHTML = ''; if(!cid) return; const list = dataState.students.filter(s=>s.classId==cid).sort((a,b)=>(Number(a.no)||0)-(Number(b.no)||0)); list.forEach(s => { const log = dataState.attendance.find(a => a.studentId==s.id && formatThaiDate(a.date) == formatThaiDate(date)); const st = log ? log.status : 'none'; const el = document.createElement('div'); el.id = `card-${s.id}`; el.className = `status-box status-${st} p-3 rounded-lg flex flex-col items-center justify-center cursor-pointer select-none`; el.onclick = () => manualAtt(s); el.innerHTML = `<div class="text-xs opacity-70 mb-1">No. ${s.no||'-'}</div><div class="font-bold text-center text-sm">${s.name}</div><div class="text-[10px] mt-1 opacity-80 status-text">${st==='none'?'รอเช็ค':st}</div>`; div.appendChild(el); }); }
       window.renderGradeReport = function() { const cid = document.getElementById('report-class').value; const tbody = document.getElementById('report-table-body'); tbody.innerHTML = ''; if(!cid) return; const list = dataState.students.filter(s => s.classId == cid).sort((a,b)=>(Number(a.no)||0)-(Number(b.no)||0)); const tasks = dataState.tasks.filter(t => t.classId == cid); list.forEach((s, idx) => { let chapScores = []; for(let i=1; i<=6; i++) { const cTasks = tasks.filter(t => t.category === 'accum' && t.chapter == i); let earn=0, max=0; if(cTasks.length > 0) { cTasks.forEach(t => { const sc = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id); earn += sc ? Number(sc.score) : 0; max += Number(t.maxScore); }); chapScores.push(max > 0 ? Math.round((earn/max)*10) : 0); } else { chapScores.push(0); } } const getSum = (cat) => { let sum = 0; tasks.filter(t => t.category === cat).forEach(t => { const sc = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id); sum += sc ? Number(sc.score) : 0; }); return sum; }; const mid = getSum('midterm'); const final = getSum('final'); const special = getSum('special'); const total = chapScores.reduce((a,b)=>a+b, 0) + mid + final; let rowHtml = `<td class="text-center text-slate-500">${s.no||idx+1}</td><td class="px-2 py-3 text-white text-xs">${s.name}</td>`; chapScores.forEach(c => rowHtml += `<td class="text-center text-amber-500">${c}</td>`); rowHtml += `<td class="text-center text-blue-400">${mid}</td><td class="text-center text-purple-400">${final}</td><td class="text-center font-bold text-white bg-slate-800/20">${total}</td><td class="text-center text-slate-300 font-bold">${calGrade(total)}</td><td class="text-center text-pink-400 bg-pink-900/10">${special}</td>`; const tr = document.createElement('tr'); tr.className = "hover:bg-slate-800/30"; tr.innerHTML = rowHtml; tbody.appendChild(tr); }); };
       function calGrade(s) { if(s>=80) return 4; if(s>=75) return 3.5; if(s>=70) return 3; if(s>=65) return 2.5; if(s>=60) return 2; if(s>=55) return 1.5; if(s>=50) return 1; return 0; }
       window.exportGradeCSV = function() { const rows = document.querySelectorAll('#report-table-body tr'); let csv = "\uFEFFNo,Name,Ch1,Ch2,Ch3,Ch4,Ch5,Ch6,Mid,Final,Total,Grade,Special\n"; rows.forEach(r => { csv += Array.from(r.querySelectorAll('td')).map(d=>`"${d.innerText}"`).join(',') + "\n"; }); downloadCSV(csv, "grade_report.csv"); };
       window.renderAttReportMatrix = function() { const cid = document.getElementById('report-att-class').value; const month = document.getElementById('report-att-month').value; const tbody = document.getElementById('att-matrix-body'); const thead = document.getElementById('att-matrix-header'); tbody.innerHTML=''; thead.innerHTML=''; if(!cid||!month) return; let logs = dataState.attendance.filter(a => a.classId == cid && a.date.startsWith(month)); let dates = [...new Set(logs.map(a=>formatThaiDate(a.date)))].sort(); window.curAttDates = dates; let h = `<th class="px-4 py-3 bg-slate-800 sticky left-0 z-20 border-r border-slate-700 w-10 text-center">#</th><th class="px-4 py-3 bg-slate-800 sticky left-[40px] z-20 border-r border-slate-700 min-w-[150px]">ชื่อ</th>`; dates.forEach(d => h+=`<th class="px-2 py-3 text-center bg-slate-800 border-b border-slate-700 min-w-[100px] whitespace-nowrap">${d}</th>`); thead.innerHTML = h; const list = dataState.students.filter(s=>s.classId==cid).sort((a,b)=>(Number(a.no)||0)-(Number(b.no)||0)); list.forEach(s => { let row = `<td class="px-4 py-2 text-center bg-slate-900 sticky left-0 z-10 border-r border-slate-800 text-slate-400">${s.no||'-'}</td><td class="px-4 py-2 bg-slate-900 sticky left-[40px] z-10 border-r border-slate-800 text-white">${s.name}</td>`; dates.forEach(d => { const log = dataState.attendance.find(a => a.studentId==s.id && formatThaiDate(a.date) == d); let t='-', c='text-slate-600'; if(log){ if(log.status=='มา'){t='✔';c='text-green-500 font-bold';} else if(log.status=='ลา'){t='ล';c='text-yellow-500';} else if(log.status=='ขาด'){t='ข';c='text-red-500';} } row += `<td class="px-2 py-2 text-center border-b border-slate-800 ${c}">${t}</td>`; }); const tr=document.createElement('tr'); tr.innerHTML=row; tbody.appendChild(tr); }); };
       window.exportMatrixCSV = function() { if(!window.curAttDates) return; let csv = "\uFEFFNo,Name," + window.curAttDates.join(',') + "\n"; const rows = document.querySelectorAll('#att-matrix-body tr'); rows.forEach(r => { csv += Array.from(r.querySelectorAll('td')).map(d=>`"${d.innerText}"`).join(',') + "\n"; }); downloadCSV(csv, "att_matrix.csv"); };
-      
-      // Admin Material Render
-      window.renderAdminMaterials = function() {
-          const filterSub = document.getElementById('mat-filter-subject').value;
-          const container = document.getElementById('admin-mat-list'); container.innerHTML = '';
-          let list = dataState.materials; if(filterSub) list = list.filter(m => m.subjectId == filterSub);
-          list.sort((a,b) => b.id - a.id).forEach(m => {
-              const subName = dataState.subjects.find(s=>s.id == m.subjectId)?.name || '-';
-              let icon = '<i class="fa-solid fa-link"></i>'; if(m.type === 'pdf') icon = '<i class="fa-solid fa-file-pdf text-red-400"></i>'; if(m.type === 'video') icon = '<i class="fa-brands fa-youtube text-red-500"></i>';
-              const div = document.createElement('div'); div.className = "bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-start hover:bg-slate-750 transition-colors";
-              div.innerHTML = `<div class="flex gap-3"><div class="mt-1 text-xl bg-slate-900 w-10 h-10 rounded-full flex items-center justify-center border border-slate-600 shadow-inner">${icon}</div><div><h4 class="font-bold text-white text-sm hover:text-amber-400"><a href="${m.link}" target="_blank">${m.title}</a></h4><p class="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded inline-block mb-1">${subName} | ${m.type.toUpperCase()}</p><p class="text-xs text-slate-300 opacity-80">${m.desc || '-'}</p></div></div><button onclick="handleDeleteMaterial('${m.id}')" class="text-slate-500 hover:text-red-500 px-2"><i class="fa-solid fa-trash"></i></button>`; container.appendChild(div);
-          });
-          if(list.length === 0) container.innerHTML = '<div class="text-center text-slate-500 py-10">ไม่พบเนื้อหา</div>';
-      };
+      window.renderAdminMaterials = function() { const filterSub = document.getElementById('mat-filter-subject').value; const container = document.getElementById('admin-mat-list'); container.innerHTML = ''; let list = dataState.materials; if(filterSub) list = list.filter(m => m.subjectId == filterSub); list.sort((a,b) => b.id - a.id).forEach(m => { const subName = dataState.subjects.find(s=>s.id == m.subjectId)?.name || '-'; let icon = '<i class="fa-solid fa-link"></i>'; if(m.type === 'pdf') icon = '<i class="fa-solid fa-file-pdf text-red-400"></i>'; if(m.type === 'video') icon = '<i class="fa-brands fa-youtube text-red-500"></i>'; const div = document.createElement('div'); div.className = "bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-start hover:bg-slate-750 transition-colors"; div.innerHTML = `<div class="flex gap-3"><div class="mt-1 text-xl bg-slate-900 w-10 h-10 rounded-full flex items-center justify-center border border-slate-600 shadow-inner">${icon}</div><div><h4 class="font-bold text-white text-sm hover:text-amber-400"><a href="${m.link}" target="_blank">${m.title}</a></h4><p class="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded inline-block mb-1">${subName} | ${m.type.toUpperCase()}</p><p class="text-xs text-slate-300 opacity-80">${m.desc || '-'}</p></div></div><button onclick="handleDeleteMaterial('${m.id}')" class="text-slate-500 hover:text-red-500 px-2"><i class="fa-solid fa-trash"></i></button>`; container.appendChild(div); }); if(list.length === 0) container.innerHTML = '<div class="text-center text-slate-500 py-10">ไม่พบเนื้อหา</div>'; };
       window.handleDeleteMaterial = function(id) { if(!confirm("ต้องการลบ?")) return; saveAndRefresh({ action: 'deleteMaterial', id: id }); showToast("ลบแล้ว", "bg-red-600"); };
 
-      // Student Dashboard
+      // Student Dashboard (Enhanced with Feedback)
       window.handleStudentLogin = function() {
           if (!dataState.students || dataState.students.length === 0) { alert("⚠️ ระบบยังโหลดไม่เสร็จ"); syncData(); return; }
           const c = document.getElementById('student-login-id').value.trim();
           let s = dataState.students.find(x => x.code == c); 
-          if(!s) {
-              const s_loose = dataState.students.find(x => Number(x.code) == Number(c));
-              if (s_loose) { s = s_loose; } else { alert(`❌ ไม่พบรหัสนักเรียน: ${c}`); return; }
-          }
+          if(!s) { const s_loose = dataState.students.find(x => Number(x.code) == Number(c)); if (s_loose) { s = s_loose; } else { alert(`❌ ไม่พบรหัสนักเรียน: ${c}`); return; } }
           document.getElementById('student-login-wrapper').classList.add('hidden');
           document.getElementById('student-dashboard').classList.remove('hidden');
           document.getElementById('std-dash-name').textContent = s.name;
@@ -739,11 +640,13 @@
                   const submission = dataState.submissions.find(x => x.studentId == s.id && x.taskId == t.id);
                   
                   let statusClass = "", statusText = "", icon = "", actionBtn = "";
-                  
+                  let feedbackHtml = "";
+
                   if(sc) { 
                       statusClass = "bg-green-900/30 border-green-600 text-green-400 hover:bg-green-900/50"; 
                       statusText = `${sc.score}`; 
-                      icon = `<i class="fa-solid fa-check-circle mb-1"></i>`; 
+                      icon = `<i class="fa-solid fa-check-circle mb-1"></i>`;
+                      if(sc.feedback) feedbackHtml = `\n\n💬 ครู: "${sc.feedback}"`;
                   }
                   else if (submission) {
                       statusClass = "bg-blue-900/30 border-blue-600 text-blue-400 hover:bg-blue-900/50";
@@ -763,10 +666,10 @@
                       actionBtn = `<button onclick="openSubmitModal('${t.id}', '${s.id}', '${t.name}')" class="mt-1 bg-yellow-600 hover:bg-yellow-500 text-white text-[10px] px-2 py-1 rounded w-full">ส่งงาน</button>`;
                   }
 
-                  let detailText = `งาน: ${t.name}\nเต็ม: ${t.maxScore}\n\nรายละเอียด:\n${t.description || '-'}`;
+                  let detailText = `งาน: ${t.name}\nเต็ม: ${t.maxScore}\n\nรายละเอียด:\n${t.description || '-'}${feedbackHtml}`;
                   html += `
-                    <div class="${statusClass} border rounded-lg p-3 flex flex-col items-center justify-center text-center transition-all relative">
-                        <div onclick="alert('${detailText.replace(/\n/g, '\\n')}')" class="cursor-pointer w-full">
+                    <div class="${statusClass} border rounded-lg p-3 flex flex-col items-center justify-center text-center transition-all relative group" title="${detailText}">
+                        <div onclick="alert('${detailText.replace(/\n/g, '\\n').replace(/"/g, '&quot;')}')" class="cursor-pointer w-full">
                             <div class="text-[10px] text-slate-300 absolute top-1 right-2 w-full text-right truncate pl-2 opacity-50">${t.category}</div>
                             <div class="text-lg mt-2">${icon}</div>
                             <div class="text-xs font-bold truncate w-full px-1 mb-1">${t.name}</div>
@@ -774,6 +677,7 @@
                         </div>
                         ${t.fileLink ? `<a href="${t.fileLink}" target="_blank" class="mt-1 text-[10px] bg-slate-700 hover:bg-slate-600 text-white px-2 py-0.5 rounded w-full flex items-center justify-center gap-1"><i class="fa-solid fa-file-pdf"></i> โจทย์</a>` : ''}
                         ${actionBtn}
+                        ${sc && sc.feedback ? '<div class="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full animate-pulse" title="มีคอมเมนต์"></div>' : ''}
                     </div>
                   `;
               });
@@ -787,9 +691,15 @@
           atts.forEach(a => { const c = a.status == 'มา' ? 'text-green-400' : (a.status == 'ลา' ? 'text-yellow-400' : 'text-red-400'); const tr = document.createElement('tr'); tr.innerHTML = `<td class="px-3 py-2 text-slate-400">${formatThaiDate(a.date)}</td><td class="px-3 py-2 text-center font-bold ${c}">${a.status}</td>`; ab.appendChild(tr); });
       };
 
-      window.logoutStudent = function() { document.getElementById('student-dashboard').classList.add('hidden'); document.getElementById('student-login-wrapper').classList.remove('hidden'); document.getElementById('student-login-id').value=''; };
+      window.openSubmitModal = function(tid, sid, tname) {
+          document.getElementById('submit-task-id').value = tid;
+          document.getElementById('submit-student-id').value = sid;
+          document.getElementById('submit-modal-title').textContent = "กำลังส่งงาน: " + tname;
+          document.getElementById('submit-link-input').value = "";
+          document.getElementById('submit-modal').classList.remove('hidden');
+      };
       
-      function switchMainTab(t) { 
+      window.switchMainTab = function(t) { 
           document.getElementById('section-admin').classList.add('hidden'); 
           document.getElementById('section-student').classList.add('hidden'); 
           document.getElementById('tab-btn-admin').className="px-5 py-2 rounded-full text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-all"; 
@@ -797,7 +707,7 @@
           
           if(t=='admin'){ 
               document.getElementById('section-admin').classList.remove('hidden');
-              if(localStorage.getItem('wany_admin_session') === 'active') { showAdminPanel(); } 
+              if(localStorage.getItem('wany_admin_session')) { showAdminPanel(); } 
               else { 
                   document.getElementById('admin-login-wrapper').classList.remove('hidden'); 
                   document.getElementById('admin-content-wrapper').classList.add('hidden'); 
@@ -810,7 +720,7 @@
           } 
       }
 
-      function switchAdminSubTab(t) { 
+      window.switchAdminSubTab = function(t) { 
           document.querySelectorAll('.admin-panel').forEach(p=>p.classList.add('hidden')); 
           document.getElementById(`admin-panel-${t}`).classList.remove('hidden'); 
           document.querySelectorAll('.menu-btn').forEach(b=>{b.classList.remove('bg-red-800/80','text-white','shadow'); b.classList.add('text-slate-400');}); 
@@ -825,15 +735,6 @@
       function getThaiDateISO() { const d = new Date(); const utc = d.getTime() + (d.getTimezoneOffset() * 60000); const bangkok = new Date(utc + (7 * 3600000)); return `${bangkok.getFullYear()}-${String(bangkok.getMonth()+1).padStart(2,'0')}-${String(bangkok.getDate()).padStart(2,'0')}`; }
       function formatThaiDate(dateString) { if(!dateString) return "-"; if(dateString.includes('T') || dateString.includes('Z')) { const d = new Date(dateString); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; } const [year, month, day] = dateString.split('-'); return `${year}/${month}/${day}`; }
       function downloadCSV(csv,n) { const l=document.createElement("a"); l.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"})); l.download=n; l.click(); }
-      
-      // New Submit Helper
-      window.openSubmitModal = function(tid, sid, tname) {
-          document.getElementById('submit-task-id').value = tid;
-          document.getElementById('submit-student-id').value = sid;
-          document.getElementById('submit-modal-title').textContent = "กำลังส่งงาน: " + tname;
-          document.getElementById('submit-link-input').value = "";
-          document.getElementById('submit-modal').classList.remove('hidden');
-      };
   </script>
  </body>
 </html>
