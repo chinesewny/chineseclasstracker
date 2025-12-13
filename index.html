@@ -217,8 +217,12 @@
    </div>
   </div>
 
-  <script>
+ <script>
+      // ***********************************************
+      // CONFIGURATION
+      // ***********************************************
       const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQNjMSE06u5xO4dtyipa5P-YzoaicppubdwlUgMpaX4L4TUjk3-xY2PRnzhS42AxZe/exec"; 
+      // ***********************************************
 
       let dataState = { subjects:[], classes:[], students:[], tasks:[], scores:[], attendance:[], materials:[], submissions:[] };
       let attMode = null; 
@@ -228,113 +232,183 @@
           const bangkokDate = getThaiDateISO();
           document.getElementById('att-date-input').value = bangkokDate;
           document.getElementById('report-att-month').value = bangkokDate.slice(0, 7);
-          renderScoreButtons(); 
+          
+          renderScoreButtons();
           initEventListeners();
-          // Login Check (Using Token now logic can be expanded)
+
+          // Check Login Session
           const savedSession = localStorage.getItem('wany_admin_session');
-          if(savedSession) { showAdminPanel(true); } else { syncData(); }
+          if(savedSession) { 
+              showAdminPanel(true); // Auto Login
+          } else {
+              syncData();
+          }
       });
 
+      // --- CORE LOGIC ---
       async function syncData() {
           const statusEl = document.getElementById('data-status');
           if(statusEl) statusEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-yellow-500"></i> กำลังโหลดข้อมูล...';
+
           try {
              const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData`);
              const json = await res.json();
+             
              if(json) { 
                  dataState = json; 
                  refreshUI(); 
                  updateInboxBadge();
-                 if(statusEl) statusEl.innerHTML = `<span class="text-green-400"><i class="fa-solid fa-wifi"></i> ออนไลน์ | นักเรียน ${json.students.length} คน</span>`;
+                 if(statusEl) {
+                     statusEl.innerHTML = `<span class="text-green-400"><i class="fa-solid fa-wifi"></i> ออนไลน์ | นักเรียน ${json.students.length} คน</span>`;
+                 }
              }
           } catch(e) { 
               console.error(e); 
               showToast("เชื่อมต่อ Server ไม่ได้", "bg-red-600");
+              if(statusEl) statusEl.innerHTML = `<span class="text-red-400 cursor-pointer" onclick="syncData()"><i class="fa-solid fa-rotate-right"></i> โหลดล้มเหลว</span>`;
           }
       }
 
       function refreshUI() {
           refreshDropdowns();
-          const taskClass = document.getElementById('task-class').value;
-          if(taskClass) renderTaskList(taskClass);
-          if(!document.getElementById('admin-panel-scan').classList.contains('hidden')) { updateScanTaskDropdown(); renderScoreRoster(); }
-          if(!document.getElementById('admin-panel-attendance').classList.contains('hidden')) { renderLiveRoster(); }
-          if(!document.getElementById('admin-panel-material').classList.contains('hidden')) { renderAdminMaterials(); }
-          if(!document.getElementById('admin-panel-homework').classList.contains('hidden')) { renderIncomingSubmissions(); }
+          
+          // [FIXED] ลบการอ้างอิง task-class ที่ทำให้เกิด Error
+          // ส่วนแสดงรายการงานเพื่อแก้ไข (ถ้ามี ID นี้ใน HTML ก็จะทำงาน ถ้าไม่มีก็ข้ามไป)
+          const taskClassEl = document.getElementById('task-class');
+          if(taskClassEl && taskClassEl.value) {
+              renderTaskList(taskClassEl.value);
+          }
+
+          if(!document.getElementById('admin-panel-scan').classList.contains('hidden')) {
+              updateScanTaskDropdown();
+              renderScoreRoster();
+          }
+
+          if(!document.getElementById('admin-panel-attendance').classList.contains('hidden')) {
+              renderLiveRoster();
+          }
+          
+          if(!document.getElementById('admin-panel-material').classList.contains('hidden')) {
+              renderAdminMaterials();
+          }
+          
+          if(!document.getElementById('admin-panel-homework').classList.contains('hidden')) {
+              renderIncomingSubmissions();
+          }
       }
 
       async function saveAndRefresh(payload) {
           updateLocalState(payload);
           refreshSpecificUI(payload);
-          try { 
+          try {
               const res = await fetch(GOOGLE_SCRIPT_URL, { method:'POST', body:JSON.stringify(payload) });
-              // For Login
-              if(payload.action === 'login') {
-                  const json = await res.json();
-                  return json;
-              }
-          } 
-          catch(e) { console.error("Save failed", e); alert("เชื่อมต่อผิดพลาด!"); return {status:'error'}; }
+              if(payload.action === 'login') return await res.json();
+          } catch(e) {
+              console.error("Save failed", e);
+              alert("บันทึกข้อมูลล้มเหลว หรือเชื่อมต่อไม่ได้");
+              return { status: 'error' };
+          }
       }
 
       function updateLocalState(p) {
           if(p.action === 'addSubject') dataState.subjects.push({id:p.id, name:p.name});
           if(p.action === 'addClass') dataState.classes.push({id:p.id, name:p.name, subjectId:p.subjectId});
           if(p.action === 'addStudent') dataState.students.push({id:p.id, classId:p.classId, no:p.no, code:p.code, name:p.name});
-          // Optimistic addTask (Multiple handled in loop)
+          
           if(p.action === 'addScore') {
               const idx = dataState.scores.findIndex(s => s.studentId == p.studentId && s.taskId == p.taskId);
-              if(idx >= 0) { 
-                  dataState.scores[idx].score = p.score; 
-                  dataState.scores[idx].feedback = p.feedback || ''; 
+              if(idx >= 0) {
+                  dataState.scores[idx].score = p.score;
+                  dataState.scores[idx].feedback = p.feedback || '';
+              } else {
+                  dataState.scores.push({studentId:p.studentId, taskId:p.taskId, score:p.score, feedback: p.feedback || ''});
               }
-              else dataState.scores.push({studentId:p.studentId, taskId:p.taskId, score:p.score, feedback: p.feedback || ''});
           }
+
           if(p.action === 'submitTask') {
               const idx = dataState.submissions.findIndex(s => s.studentId == p.studentId && s.taskId == p.taskId);
-              if(idx >= 0) { dataState.submissions[idx].link = p.link; dataState.submissions[idx].timestampISO = new Date().toISOString(); }
-              else dataState.submissions.push({taskId:p.taskId, studentId:p.studentId, link:p.link, timestampISO: new Date().toISOString()});
+              if(idx >= 0) { 
+                  dataState.submissions[idx].link = p.link; 
+                  dataState.submissions[idx].timestampISO = new Date().toISOString(); 
+              } else {
+                  dataState.submissions.push({taskId:p.taskId, studentId:p.studentId, link:p.link, timestampISO: new Date().toISOString()});
+              }
           }
+
           if(p.action === 'addAttendance') {
               const idx = dataState.attendance.findIndex(a => a.studentId == p.studentId && formatThaiDate(a.date) == formatThaiDate(p.date));
               if(idx >= 0) dataState.attendance[idx].status = p.status;
               else dataState.attendance.push({studentId:p.studentId, classId:p.classId, date:p.date, status:p.status});
           }
+          
           if(p.action === 'addMaterial') dataState.materials.push({id: p.id, subjectId: p.subjectId, title: p.title, link: p.link, type: p.type, desc: p.desc});
           if(p.action === 'deleteMaterial') dataState.materials = dataState.materials.filter(m => m.id != p.id);
+          
           updateInboxBadge();
       }
 
       function refreshSpecificUI(p) {
           if(['addSubject','addClass'].includes(p.action)) refreshDropdowns();
-          if(p.action === 'addTask') { updateScanTaskDropdown(); }
+          if(p.action === 'addTask') updateScanTaskDropdown();
           if(p.action === 'addScore') { renderScoreRoster(); renderIncomingSubmissions(); }
-          if(p.action === 'addMaterial' || p.action === 'deleteMaterial') { renderAdminMaterials(); }
+          if(p.action === 'addMaterial' || p.action === 'deleteMaterial') renderAdminMaterials();
       }
 
-      // --- AUTH ---
+      // --- UI HELPERS & AUTH ---
       function showAdminPanel(isAutoLogin = false) {
           document.getElementById('admin-login-wrapper').classList.add('hidden');
           document.getElementById('admin-content-wrapper').classList.remove('hidden');
+          document.getElementById('tab-btn-admin').className="px-5 py-2 rounded-full text-sm font-semibold text-white bg-red-700 shadow-lg transition-all";
+          document.getElementById('tab-btn-student').className="px-5 py-2 rounded-full text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-all";
+          
           refreshUI(); 
           let currentPanel = 'attendance';
-          document.querySelectorAll('.admin-panel').forEach(p => { if(!p.classList.contains('hidden')) currentPanel = p.id.replace('admin-panel-', ''); });
+          document.querySelectorAll('.admin-panel').forEach(p => {
+              if(!p.classList.contains('hidden')) currentPanel = p.id.replace('admin-panel-', '');
+          });
           switchAdminSubTab(currentPanel);
-          syncData(); 
+          if(!isAutoLogin) syncData(); 
       }
+
       function handleAdminLogout() {
-          if(!confirm("ต้องการออกจากระบบ?")) return;
+          if(!confirm("ต้องการออกจากระบบคุณครูใช่หรือไม่?")) return;
           localStorage.removeItem('wany_admin_session');
           location.reload();
       }
 
+      function refreshDropdowns() {
+          const populate = (id, arr) => {
+              const el = document.getElementById(id);
+              if(!el) return;
+              const currentVal = el.value; 
+              el.innerHTML = '<option value="">-- เลือก --</option>';
+              [...arr].sort((a,b)=>a.name.localeCompare(b.name)).forEach(i=>{
+                  const opt = document.createElement('option');
+                  opt.value=i.id; opt.textContent=i.name; el.appendChild(opt);
+              });
+              if(currentVal) el.value = currentVal; 
+          };
+          populate('class-subject-ref', dataState.subjects);
+          populate('student-class', dataState.classes);
+          populate('scan-class-select', dataState.classes);
+          populate('att-class-select', dataState.classes);
+          populate('check-class-filter', dataState.classes);
+          populate('report-class', dataState.classes);
+          populate('report-att-class', dataState.classes);
+          populate('mat-subject', dataState.subjects);
+          populate('mat-filter-subject', dataState.subjects);
+          populate('task-subject-filter', dataState.subjects); 
+          populate('inbox-filter-class', dataState.classes);
+          // populate('task-class', dataState.classes); // [FIXED] เอาออกเพราะ element นี้ไม่มีแล้ว
+      }
+
       function initEventListeners() {
-          // [UPDATE] Admin Login with Server Check
+          // Login Form
           document.getElementById('admin-login-form').onsubmit = async (e) => {
               e.preventDefault();
               const u = document.getElementById('admin-username').value;
               const p = document.getElementById('admin-password').value;
-              const btn = document.getElementById('btn-login-submit');
+              const btn = document.querySelector('#admin-login-form button');
               btn.textContent = "Checking..."; btn.disabled = true;
               
               const res = await saveAndRefresh({ action: 'login', username: u, password: p });
@@ -356,6 +430,7 @@
               const checkboxes = document.querySelectorAll('input[name="selectedClasses"]:checked');
               const selectedClassIds = Array.from(checkboxes).map(cb => cb.value);
               if (selectedClassIds.length === 0) { alert("กรุณาเลือกห้องเรียนอย่างน้อย 1 ห้อง"); return; }
+              
               const subId = document.getElementById('task-subject-filter').value;
               const cat = document.getElementById('task-category').value;
               const baseId = Date.now();
@@ -365,9 +440,14 @@
                   name: document.getElementById('task-name').value, maxScore: document.getElementById('task-max').value, 
                   dueDateISO: getThaiDateISO(), description: document.getElementById('task-desc').value, fileLink: document.getElementById('task-link').value 
               };
-              // Optimistic push
+              
               selectedClassIds.forEach((cid, index) => {
-                  dataState.tasks.push({ id: baseId + index, classId: cid, subjectId: subId, category: payload.category, chapter: payload.chapter, name: payload.name, maxScore: payload.maxScore, dueDateISO: payload.dueDateISO, description: payload.description, fileLink: payload.fileLink });
+                  dataState.tasks.push({
+                      id: baseId + index, classId: cid, subjectId: subId, 
+                      category: payload.category, chapter: payload.chapter, 
+                      name: payload.name, maxScore: payload.maxScore, 
+                      dueDateISO: payload.dueDateISO, description: payload.description, fileLink: payload.fileLink 
+                  });
               });
               saveAndRefresh(payload); 
               e.target.reset(); document.getElementById('task-class-checkboxes').innerHTML = '<div class="text-xs text-slate-500 text-center col-span-2">- บันทึกเสร็จสิ้น -</div>';
@@ -379,7 +459,7 @@
               saveAndRefresh({ action: 'addMaterial', id: Date.now(), subjectId: document.getElementById('mat-subject').value, title: document.getElementById('mat-title').value, type: document.getElementById('mat-type').value, link: document.getElementById('mat-link').value, desc: document.getElementById('mat-desc').value });
               e.target.reset(); showToast("เพิ่มเนื้อหาสำเร็จ");
           };
-          
+
           document.getElementById('form-submit-work').onsubmit = (e) => {
               e.preventDefault();
               const tid = document.getElementById('submit-task-id').value;
@@ -394,21 +474,89 @@
           };
 
           document.getElementById('task-category').onchange = (e) => { if(e.target.value === 'accum') document.getElementById('chapter-wrapper').classList.remove('hidden'); else document.getElementById('chapter-wrapper').classList.add('hidden'); };
+          
+          // [FIXED] ลบ Event Listener ของ task-class ที่ไม่มีอยู่แล้ว
+          // if(document.getElementById('task-class')) {
+          //    document.getElementById('task-class').onchange = ...
+          // }
+
           const scanInp = document.getElementById('scan-score-input');
           scanInp.onkeydown = (e) => { if(e.key==='Enter'){ handleScoreScan(scanInp.value.trim()); scanInp.value=''; } };
           document.getElementById('scan-class-select').onchange = (e) => { updateScanTaskDropdown(); renderScoreRoster(); };
           document.getElementById('scan-task-select').onchange = renderScoreRoster;
+          
           document.getElementById('modal-score-input').onkeydown = (e) => { if (e.key === 'Enter') saveScoreFromModal(); };
           document.getElementById('btn-modal-save').onclick = saveScoreFromModal;
+
           document.getElementById('att-class-select').onchange = renderLiveRoster;
           document.getElementById('att-date-input').onchange = renderLiveRoster;
           const attInp = document.getElementById('att-scan-input');
           attInp.onkeydown = (e) => { if(e.key==='Enter'){ handleAttScan(attInp.value.trim()); attInp.value=''; } };
+          
           document.getElementById('report-class').onchange = renderGradeReport;
           document.getElementById('student-login-id').onkeydown = (e) => { if(e.key === 'Enter') handleStudentLogin(); };
       }
 
-      // --- INBOX / GRADING LOGIC (UPDATED) ---
+      function renderScoreButtons() {
+          const container = document.getElementById('score-buttons-container');
+          if(!container) return;
+          container.innerHTML = '';
+          for(let i=1; i<=10; i++) {
+              const btn = document.createElement('button');
+              btn.textContent = i;
+              btn.id = `btn-score-${i}`;
+              btn.className = "btn-score py-2 rounded bg-slate-800 border border-slate-600 text-white hover:bg-slate-700 text-xs font-bold transition-all";
+              btn.onclick = () => setScoreMode(i);
+              container.appendChild(btn);
+          }
+      }
+
+      window.setScoreMode = function(mode) {
+          scoreMode = mode;
+          document.querySelectorAll('.btn-score').forEach(b => b.classList.remove('btn-score-active'));
+          document.getElementById('btn-score-manual').classList.remove('btn-score-active');
+          
+          if(mode === 'manual') {
+              document.getElementById('btn-score-manual').classList.add('btn-score-active');
+          } else {
+              const btn = document.getElementById(`btn-score-${mode}`);
+              if(btn) btn.classList.add('btn-score-active');
+          }
+          const inp = document.getElementById('scan-score-input');
+          inp.placeholder = mode === 'manual' ? "โหมด: Popup (ระบุเอง)" : `โหมด: ให้ ${mode} คะแนน`;
+          inp.focus();
+      };
+
+      function renderTaskList(classId) {
+          const container = document.getElementById('task-list-container');
+          const wrapper = document.getElementById('task-edit-list');
+          if(!container || !wrapper) return; 
+          
+          if(!classId) { wrapper.classList.add('hidden'); return; }
+          const tasks = dataState.tasks.filter(t => t.classId == classId).reverse();
+          container.innerHTML = '';
+          if(tasks.length > 0) wrapper.classList.remove('hidden'); else wrapper.classList.add('hidden');
+          tasks.forEach(t => {
+              const div = document.createElement('div');
+              div.className = "flex justify-between items-center bg-slate-800 p-2 rounded border border-slate-700 hover:border-slate-500 transition-colors";
+              div.innerHTML = `<div class="truncate flex-1 pr-2"><span class="text-xs text-amber-500 font-bold">[${t.category}${t.chapter>0?' '+t.chapter:''}]</span> <span class="text-sm text-slate-200">${t.name}</span> <span class="text-xs text-slate-500">(${t.maxScore}คะแนน)</span></div><button onclick="openEditTaskModal('${t.id}')" class="bg-yellow-700 hover:bg-yellow-600 text-white text-xs px-2 py-1 rounded">แก้ไข</button>`;
+              container.appendChild(div);
+          });
+      }
+
+      window.openEditTaskModal = function(taskId) {
+          const t = dataState.tasks.find(x => x.id == taskId);
+          if(!t) return;
+          document.getElementById('edit-task-id').value = t.id;
+          document.getElementById('edit-task-name').value = t.name;
+          document.getElementById('edit-task-max').value = t.maxScore;
+          document.getElementById('edit-task-category').value = t.category;
+          document.getElementById('edit-task-chapter').value = t.chapter || 0;
+          document.getElementById('edit-task-desc').value = t.description || '';
+          document.getElementById('edit-task-link').value = t.fileLink || '';
+          document.getElementById('edit-task-modal').classList.remove('hidden');
+      };
+
       function updateInboxBadge() {
            let count = 0;
            dataState.submissions.forEach(sub => {
@@ -416,8 +564,12 @@
                if(!hasScore) count++;
            });
            const badge = document.getElementById('badge-homework');
-           if(count > 0) { badge.classList.remove('hidden'); badge.textContent = count > 99 ? '99+' : count; } 
-           else { badge.classList.add('hidden'); }
+           if(count > 0) { 
+               badge.classList.remove('hidden'); 
+               badge.textContent = count > 99 ? '99+' : count; 
+           } else { 
+               badge.classList.add('hidden'); 
+           }
       }
 
       window.renderIncomingSubmissions = function() {
@@ -444,7 +596,6 @@
               const task = dataState.tasks.find(t => t.id == sub.taskId);
               const student = dataState.students.find(s => s.id == sub.studentId);
               if(!task || !student) return;
-              
               const className = dataState.classes.find(c => c.id == student.classId)?.name || '-';
 
               const div = document.createElement('div');
@@ -457,7 +608,6 @@
                       </div>
                       <h4 class="font-bold text-white text-sm">${task.name} <span class="text-slate-500 text-xs">(${task.maxScore} คะแนน)</span></h4>
                       <p class="text-xs text-amber-400 font-bold mb-2">${student.name} (เลขที่ ${student.no})</p>
-                      
                       <div class="flex gap-3 mt-2">
                           <a href="${sub.link}" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-blue-300 px-3 py-1 rounded text-xs flex items-center gap-1 border border-slate-600"><i class="fa-solid fa-link"></i> ลิงก์งานที่ส่ง</a>
                           ${task.fileLink ? `<a href="${task.fileLink}" target="_blank" class="bg-slate-900 text-slate-400 px-3 py-1 rounded text-xs flex items-center gap-1 border border-slate-700"><i class="fa-solid fa-file-pdf"></i> โจทย์</a>` : ''}
@@ -487,28 +637,6 @@
           renderIncomingSubmissions();
       };
 
-      // --- GENERAL & UTILS ---
-      function refreshDropdowns() {
-          const populate = (id, arr) => {
-              const el = document.getElementById(id); if(!el) return;
-              const current = el.value;
-              el.innerHTML = '<option value="">-- เลือก --</option>';
-              [...arr].sort((a,b)=>a.name.localeCompare(b.name)).forEach(i=>{ const opt = document.createElement('option'); opt.value=i.id; opt.textContent=i.name; el.appendChild(opt); });
-              if(current) el.value = current;
-          };
-          populate('class-subject-ref', dataState.subjects);
-          populate('student-class', dataState.classes);
-          populate('scan-class-select', dataState.classes);
-          populate('att-class-select', dataState.classes);
-          populate('check-class-filter', dataState.classes);
-          populate('report-class', dataState.classes);
-          populate('report-att-class', dataState.classes);
-          populate('mat-subject', dataState.subjects);
-          populate('mat-filter-subject', dataState.subjects);
-          populate('task-subject-filter', dataState.subjects);
-          populate('inbox-filter-class', dataState.classes); // [NEW] Inbox Filter
-      }
-
       function updateScanTaskDropdown() {
           const cid = document.getElementById('scan-class-select').value;
           const el = document.getElementById('scan-task-select'); 
@@ -520,13 +648,16 @@
               el.appendChild(opt); 
           });
       }
+
       function handleScoreScan(code) {
           const tid = document.getElementById('scan-task-select').value; if(!tid) return alert("เลือกงานก่อน");
           const s = dataState.students.find(x => x.code == code); const t = dataState.tasks.find(x => x.id == tid); if(!s || !t) return alert("ไม่พบข้อมูล");
           if(scoreMode === 'manual') openScoreModalForStudent(s, t); else { if(Number(scoreMode) > Number(t.maxScore)) return alert("คะแนนเกินเต็ม"); saveScoreDirectly(s, t, scoreMode); }
           document.getElementById('scan-score-input').value = '';
       }
+
       function saveScoreDirectly(s, t, val) { saveAndRefresh({ action:'addScore', studentId: s.id, taskId: t.id, score: val }); showToast(`บันทึก ${s.no}.${s.name} : ${val} คะแนน`); }
+      
       function openScoreModalForStudent(s, t) { 
           window.pendingScore = { s, t }; 
           document.getElementById('score-modal').classList.remove('hidden'); 
@@ -536,9 +667,10 @@
           
           const exist = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id); 
           document.getElementById('modal-score-input').value = exist ? exist.score : ''; 
-          document.getElementById('modal-score-feedback').value = exist ? exist.feedback || '' : ''; // Load feedback
+          document.getElementById('modal-score-feedback').value = exist ? exist.feedback || '' : '';
           setTimeout(() => document.getElementById('modal-score-input').focus(), 100); 
       }
+
       function saveScoreFromModal() { 
           const val = document.getElementById('modal-score-input').value; 
           const fb = document.getElementById('modal-score-feedback').value;
@@ -568,28 +700,82 @@
               div.appendChild(el); 
           }); 
       };
-      
-      // ... (Rest of Att functions, Report functions same as V9) ...
-      // For brevity, skipping repeated boilerplate. Just ensure existing report logic is here.
-      // (Copy paste Att/Report logic from previous version here)
+
       function handleAttScan(code) { if(!attMode) return; const cid = document.getElementById('att-class-select').value; const s = dataState.students.find(x => x.code == code && x.classId == cid); if(!s) return alert("ไม่พบ/ผิดห้อง"); processAtt(s); }
       function manualAtt(s) { if(!attMode) return alert("เลือกสถานะก่อน"); processAtt(s); }
       function processAtt(s) { const date = document.getElementById('att-date-input').value; const card = document.getElementById(`card-${s.id}`); if(card) { card.className = `status-box status-${attMode} p-3 rounded-lg flex flex-col items-center justify-center cursor-pointer select-none transition-transform scale-105`; card.querySelector('.status-text').textContent = attMode; setTimeout(()=>card.classList.remove('scale-105'), 200); } saveAndRefresh({ action:'addAttendance', studentId:s.id, classId:s.classId, date:date, status:attMode }); }
-      function renderLiveRoster() { const cid = document.getElementById('att-class-select').value; const date = document.getElementById('att-date-input').value; const div = document.getElementById('att-roster-grid'); div.innerHTML = ''; if(!cid) return; const list = dataState.students.filter(s=>s.classId==cid).sort((a,b)=>(Number(a.no)||0)-(Number(b.no)||0)); list.forEach(s => { const log = dataState.attendance.find(a => a.studentId==s.id && formatThaiDate(a.date) == formatThaiDate(date)); const st = log ? log.status : 'none'; const el = document.createElement('div'); el.id = `card-${s.id}`; el.className = `status-box status-${st} p-3 rounded-lg flex flex-col items-center justify-center cursor-pointer select-none`; el.onclick = () => manualAtt(s); el.innerHTML = `<div class="text-xs opacity-70 mb-1">No. ${s.no||'-'}</div><div class="font-bold text-center text-sm">${s.name}</div><div class="text-[10px] mt-1 opacity-80 status-text">${st==='none'?'รอเช็ค':st}</div>`; div.appendChild(el); }); }
+      
+      function renderLiveRoster() { 
+          const cid = document.getElementById('att-class-select').value; 
+          const date = document.getElementById('att-date-input').value; 
+          const div = document.getElementById('att-roster-grid'); 
+          div.innerHTML = ''; 
+          if(!cid) return; 
+          const list = dataState.students.filter(s=>s.classId==cid).sort((a,b)=>(Number(a.no)||0)-(Number(b.no)||0)); 
+          list.forEach(s => { 
+              const log = dataState.attendance.find(a => a.studentId==s.id && formatThaiDate(a.date) == formatThaiDate(date)); 
+              const st = log ? log.status : 'none'; 
+              const el = document.createElement('div'); 
+              el.id = `card-${s.id}`; 
+              el.className = `status-box status-${st} p-3 rounded-lg flex flex-col items-center justify-center cursor-pointer select-none`; 
+              el.onclick = () => manualAtt(s); 
+              el.innerHTML = `<div class="text-xs opacity-70 mb-1">No. ${s.no||'-'}</div><div class="font-bold text-center text-sm">${s.name}</div><div class="text-[10px] mt-1 opacity-80 status-text">${st==='none'?'รอเช็ค':st}</div>`; 
+              div.appendChild(el); 
+          }); 
+      }
+
       window.renderGradeReport = function() { const cid = document.getElementById('report-class').value; const tbody = document.getElementById('report-table-body'); tbody.innerHTML = ''; if(!cid) return; const list = dataState.students.filter(s => s.classId == cid).sort((a,b)=>(Number(a.no)||0)-(Number(b.no)||0)); const tasks = dataState.tasks.filter(t => t.classId == cid); list.forEach((s, idx) => { let chapScores = []; for(let i=1; i<=6; i++) { const cTasks = tasks.filter(t => t.category === 'accum' && t.chapter == i); let earn=0, max=0; if(cTasks.length > 0) { cTasks.forEach(t => { const sc = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id); earn += sc ? Number(sc.score) : 0; max += Number(t.maxScore); }); chapScores.push(max > 0 ? Math.round((earn/max)*10) : 0); } else { chapScores.push(0); } } const getSum = (cat) => { let sum = 0; tasks.filter(t => t.category === cat).forEach(t => { const sc = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id); sum += sc ? Number(sc.score) : 0; }); return sum; }; const mid = getSum('midterm'); const final = getSum('final'); const special = getSum('special'); const total = chapScores.reduce((a,b)=>a+b, 0) + mid + final; let rowHtml = `<td class="text-center text-slate-500">${s.no||idx+1}</td><td class="px-2 py-3 text-white text-xs">${s.name}</td>`; chapScores.forEach(c => rowHtml += `<td class="text-center text-amber-500">${c}</td>`); rowHtml += `<td class="text-center text-blue-400">${mid}</td><td class="text-center text-purple-400">${final}</td><td class="text-center font-bold text-white bg-slate-800/20">${total}</td><td class="text-center text-slate-300 font-bold">${calGrade(total)}</td><td class="text-center text-pink-400 bg-pink-900/10">${special}</td>`; const tr = document.createElement('tr'); tr.className = "hover:bg-slate-800/30"; tr.innerHTML = rowHtml; tbody.appendChild(tr); }); };
       function calGrade(s) { if(s>=80) return 4; if(s>=75) return 3.5; if(s>=70) return 3; if(s>=65) return 2.5; if(s>=60) return 2; if(s>=55) return 1.5; if(s>=50) return 1; return 0; }
       window.exportGradeCSV = function() { const rows = document.querySelectorAll('#report-table-body tr'); let csv = "\uFEFFNo,Name,Ch1,Ch2,Ch3,Ch4,Ch5,Ch6,Mid,Final,Total,Grade,Special\n"; rows.forEach(r => { csv += Array.from(r.querySelectorAll('td')).map(d=>`"${d.innerText}"`).join(',') + "\n"; }); downloadCSV(csv, "grade_report.csv"); };
+      
       window.renderAttReportMatrix = function() { const cid = document.getElementById('report-att-class').value; const month = document.getElementById('report-att-month').value; const tbody = document.getElementById('att-matrix-body'); const thead = document.getElementById('att-matrix-header'); tbody.innerHTML=''; thead.innerHTML=''; if(!cid||!month) return; let logs = dataState.attendance.filter(a => a.classId == cid && a.date.startsWith(month)); let dates = [...new Set(logs.map(a=>formatThaiDate(a.date)))].sort(); window.curAttDates = dates; let h = `<th class="px-4 py-3 bg-slate-800 sticky left-0 z-20 border-r border-slate-700 w-10 text-center">#</th><th class="px-4 py-3 bg-slate-800 sticky left-[40px] z-20 border-r border-slate-700 min-w-[150px]">ชื่อ</th>`; dates.forEach(d => h+=`<th class="px-2 py-3 text-center bg-slate-800 border-b border-slate-700 min-w-[100px] whitespace-nowrap">${d}</th>`); thead.innerHTML = h; const list = dataState.students.filter(s=>s.classId==cid).sort((a,b)=>(Number(a.no)||0)-(Number(b.no)||0)); list.forEach(s => { let row = `<td class="px-4 py-2 text-center bg-slate-900 sticky left-0 z-10 border-r border-slate-800 text-slate-400">${s.no||'-'}</td><td class="px-4 py-2 bg-slate-900 sticky left-[40px] z-10 border-r border-slate-800 text-white">${s.name}</td>`; dates.forEach(d => { const log = dataState.attendance.find(a => a.studentId==s.id && formatThaiDate(a.date) == d); let t='-', c='text-slate-600'; if(log){ if(log.status=='มา'){t='✔';c='text-green-500 font-bold';} else if(log.status=='ลา'){t='ล';c='text-yellow-500';} else if(log.status=='ขาด'){t='ข';c='text-red-500';} } row += `<td class="px-2 py-2 text-center border-b border-slate-800 ${c}">${t}</td>`; }); const tr=document.createElement('tr'); tr.innerHTML=row; tbody.appendChild(tr); }); };
       window.exportMatrixCSV = function() { if(!window.curAttDates) return; let csv = "\uFEFFNo,Name," + window.curAttDates.join(',') + "\n"; const rows = document.querySelectorAll('#att-matrix-body tr'); rows.forEach(r => { csv += Array.from(r.querySelectorAll('td')).map(d=>`"${d.innerText}"`).join(',') + "\n"; }); downloadCSV(csv, "att_matrix.csv"); };
-      window.renderAdminMaterials = function() { const filterSub = document.getElementById('mat-filter-subject').value; const container = document.getElementById('admin-mat-list'); container.innerHTML = ''; let list = dataState.materials; if(filterSub) list = list.filter(m => m.subjectId == filterSub); list.sort((a,b) => b.id - a.id).forEach(m => { const subName = dataState.subjects.find(s=>s.id == m.subjectId)?.name || '-'; let icon = '<i class="fa-solid fa-link"></i>'; if(m.type === 'pdf') icon = '<i class="fa-solid fa-file-pdf text-red-400"></i>'; if(m.type === 'video') icon = '<i class="fa-brands fa-youtube text-red-500"></i>'; const div = document.createElement('div'); div.className = "bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-start hover:bg-slate-750 transition-colors"; div.innerHTML = `<div class="flex gap-3"><div class="mt-1 text-xl bg-slate-900 w-10 h-10 rounded-full flex items-center justify-center border border-slate-600 shadow-inner">${icon}</div><div><h4 class="font-bold text-white text-sm hover:text-amber-400"><a href="${m.link}" target="_blank">${m.title}</a></h4><p class="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded inline-block mb-1">${subName} | ${m.type.toUpperCase()}</p><p class="text-xs text-slate-300 opacity-80">${m.desc || '-'}</p></div></div><button onclick="handleDeleteMaterial('${m.id}')" class="text-slate-500 hover:text-red-500 px-2"><i class="fa-solid fa-trash"></i></button>`; container.appendChild(div); }); if(list.length === 0) container.innerHTML = '<div class="text-center text-slate-500 py-10">ไม่พบเนื้อหา</div>'; };
+      
+      window.renderAdminMaterials = function() { 
+          const filterSub = document.getElementById('mat-filter-subject').value; 
+          const container = document.getElementById('admin-mat-list'); 
+          container.innerHTML = ''; 
+          let list = dataState.materials; 
+          if(filterSub) list = list.filter(m => m.subjectId == filterSub); 
+          list.sort((a,b) => b.id - a.id).forEach(m => { 
+              const subName = dataState.subjects.find(s=>s.id == m.subjectId)?.name || '-'; 
+              let icon = '<i class="fa-solid fa-link"></i>'; 
+              if(m.type === 'pdf') icon = '<i class="fa-solid fa-file-pdf text-red-400"></i>'; 
+              if(m.type === 'video') icon = '<i class="fa-brands fa-youtube text-red-500"></i>'; 
+              const div = document.createElement('div'); 
+              div.className = "bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-start hover:bg-slate-750 transition-colors"; 
+              div.innerHTML = `<div class="flex gap-3"><div class="mt-1 text-xl bg-slate-900 w-10 h-10 rounded-full flex items-center justify-center border border-slate-600 shadow-inner">${icon}</div><div><h4 class="font-bold text-white text-sm hover:text-amber-400"><a href="${m.link}" target="_blank">${m.title}</a></h4><p class="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded inline-block mb-1">${subName} | ${m.type.toUpperCase()}</p><p class="text-xs text-slate-300 opacity-80">${m.desc || '-'}</p></div></div><button onclick="handleDeleteMaterial('${m.id}')" class="text-slate-500 hover:text-red-500 px-2"><i class="fa-solid fa-trash"></i></button>`; 
+              container.appendChild(div); 
+          }); 
+          if(list.length === 0) container.innerHTML = '<div class="text-center text-slate-500 py-10">ไม่พบเนื้อหา</div>'; 
+      };
       window.handleDeleteMaterial = function(id) { if(!confirm("ต้องการลบ?")) return; saveAndRefresh({ action: 'deleteMaterial', id: id }); showToast("ลบแล้ว", "bg-red-600"); };
 
-      // Student Dashboard (Enhanced with Feedback)
+      // Multi-Class Task Checkbox
+      window.renderTaskClassCheckboxes = function() {
+          const subId = document.getElementById('task-subject-filter').value;
+          const container = document.getElementById('task-class-checkboxes');
+          container.innerHTML = '';
+          if (!subId) { container.innerHTML = '<div class="text-xs text-slate-500 text-center col-span-2">- กรุณาเลือกวิชาก่อน -</div>'; return; }
+          const classes = dataState.classes.filter(c => c.subjectId == subId);
+          if (classes.length === 0) { container.innerHTML = '<div class="text-xs text-red-400 text-center col-span-2">ไม่พบห้องเรียนในวิชานี้</div>'; return; }
+          classes.forEach(c => {
+              const wrapper = document.createElement('label');
+              wrapper.className = "flex items-center space-x-2 bg-slate-800 p-2 rounded cursor-pointer hover:bg-slate-700 border border-slate-700";
+              wrapper.innerHTML = `<input type="checkbox" name="selectedClasses" value="${c.id}" class="accent-amber-500 w-4 h-4 rounded"><span class="text-xs text-white font-bold">${c.name}</span>`;
+              container.appendChild(wrapper);
+          });
+      };
+
+      // Student Dashboard
       window.handleStudentLogin = function() {
           if (!dataState.students || dataState.students.length === 0) { alert("⚠️ ระบบยังโหลดไม่เสร็จ"); syncData(); return; }
           const c = document.getElementById('student-login-id').value.trim();
           let s = dataState.students.find(x => x.code == c); 
-          if(!s) { const s_loose = dataState.students.find(x => Number(x.code) == Number(c)); if (s_loose) { s = s_loose; } else { alert(`❌ ไม่พบรหัสนักเรียน: ${c}`); return; } }
+          if(!s) {
+              const s_loose = dataState.students.find(x => Number(x.code) == Number(c));
+              if (s_loose) { s = s_loose; } else { alert(`❌ ไม่พบรหัสนักเรียน: ${c}`); return; }
+          }
           document.getElementById('student-login-wrapper').classList.add('hidden');
           document.getElementById('student-dashboard').classList.remove('hidden');
           document.getElementById('std-dash-name').textContent = s.name;
@@ -691,15 +877,9 @@
           atts.forEach(a => { const c = a.status == 'มา' ? 'text-green-400' : (a.status == 'ลา' ? 'text-yellow-400' : 'text-red-400'); const tr = document.createElement('tr'); tr.innerHTML = `<td class="px-3 py-2 text-slate-400">${formatThaiDate(a.date)}</td><td class="px-3 py-2 text-center font-bold ${c}">${a.status}</td>`; ab.appendChild(tr); });
       };
 
-      window.openSubmitModal = function(tid, sid, tname) {
-          document.getElementById('submit-task-id').value = tid;
-          document.getElementById('submit-student-id').value = sid;
-          document.getElementById('submit-modal-title').textContent = "กำลังส่งงาน: " + tname;
-          document.getElementById('submit-link-input').value = "";
-          document.getElementById('submit-modal').classList.remove('hidden');
-      };
+      window.logoutStudent = function() { document.getElementById('student-dashboard').classList.add('hidden'); document.getElementById('student-login-wrapper').classList.remove('hidden'); document.getElementById('student-login-id').value=''; };
       
-      window.switchMainTab = function(t) { 
+      function switchMainTab(t) { 
           document.getElementById('section-admin').classList.add('hidden'); 
           document.getElementById('section-student').classList.add('hidden'); 
           document.getElementById('tab-btn-admin').className="px-5 py-2 rounded-full text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-all"; 
@@ -720,7 +900,7 @@
           } 
       }
 
-      window.switchAdminSubTab = function(t) { 
+      function switchAdminSubTab(t) { 
           document.querySelectorAll('.admin-panel').forEach(p=>p.classList.add('hidden')); 
           document.getElementById(`admin-panel-${t}`).classList.remove('hidden'); 
           document.querySelectorAll('.menu-btn').forEach(b=>{b.classList.remove('bg-red-800/80','text-white','shadow'); b.classList.add('text-slate-400');}); 
@@ -735,6 +915,41 @@
       function getThaiDateISO() { const d = new Date(); const utc = d.getTime() + (d.getTimezoneOffset() * 60000); const bangkok = new Date(utc + (7 * 3600000)); return `${bangkok.getFullYear()}-${String(bangkok.getMonth()+1).padStart(2,'0')}-${String(bangkok.getDate()).padStart(2,'0')}`; }
       function formatThaiDate(dateString) { if(!dateString) return "-"; if(dateString.includes('T') || dateString.includes('Z')) { const d = new Date(dateString); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; } const [year, month, day] = dateString.split('-'); return `${year}/${month}/${day}`; }
       function downloadCSV(csv,n) { const l=document.createElement("a"); l.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"})); l.download=n; l.click(); }
+      
+      window.openSubmitModal = function(tid, sid, tname) {
+          document.getElementById('submit-task-id').value = tid;
+          document.getElementById('submit-student-id').value = sid;
+          document.getElementById('submit-modal-title').textContent = "กำลังส่งงาน: " + tname;
+          document.getElementById('submit-link-input').value = "";
+          document.getElementById('submit-modal').classList.remove('hidden');
+      };
+      
+      window.performCheck = function() {
+          const txt = document.getElementById('check-student-input').value.trim();
+          const cid = document.getElementById('check-class-filter').value;
+          if(txt === "") { document.getElementById('check-result').classList.add('hidden'); return; }
+          let s = dataState.students.find(x => x.code == txt || x.name.includes(txt));
+          if(cid) s = dataState.students.find(x => (x.code == txt || x.name.includes(txt)) && x.classId == cid);
+          if(!s) { document.getElementById('check-result').classList.add('hidden'); return; }
+
+          document.getElementById('check-result').classList.remove('hidden');
+          document.getElementById('check-name').textContent = s.name;
+          const cName = dataState.classes.find(c => c.id == s.classId)?.name || '-';
+          document.getElementById('check-class').textContent = cName;
+          const tbody = document.getElementById('check-table-body');
+          tbody.innerHTML = '';
+          let total = 0;
+          dataState.tasks.filter(t => t.classId == s.classId).forEach(t => {
+              const sc = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id);
+              const val = sc ? Number(sc.score) : 0;
+              if(t.category !== 'special') total += val;
+              const tr = document.createElement('tr');
+              const scoreClass = val > 0 ? "text-white font-bold" : "text-slate-500";
+              tr.innerHTML = `<td class="px-4 py-2 text-slate-300">${t.name}</td><td class="px-4 py-2 text-right ${scoreClass}">${val} / ${t.maxScore}</td>`;
+              tbody.appendChild(tr);
+          });
+          document.getElementById('check-total-score').textContent = total;
+      };
   </script>
  </body>
 </html>
