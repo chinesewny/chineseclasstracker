@@ -18,6 +18,7 @@
       .status-box { transition: all 0.2s; }
       .status-none { background: rgba(51, 65, 85, 0.5); border: 1px dashed #475569; color: #94a3b8; }
       .status-done { background: #064e3b; border: 1px solid #059669; color: white; box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+      .status-returned { background: rgba(180, 83, 9, 0.5); border: 1px solid #d97706; color: #fbbf24; box-shadow: 0 0 10px rgba(251, 191, 36, 0.2); }
       .btn-score-active { background-color: #d97706 !important; color: white !important; border-color: #fbbf24 !important; transform: scale(1.05); box-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
       #toast-notification { transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s; }
       .toast-show { transform: translate(-50%, 0) !important; opacity: 1 !important; }
@@ -224,7 +225,7 @@
       const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQNjMSE06u5xO4dtyipa5P-YzoaicppubdwlUgMpaX4L4TUjk3-xY2PRnzhS42AxZe/exec"; 
       // ***********************************************
 
-      let dataState = { subjects:[], classes:[], students:[], tasks:[], scores:[], attendance:[], materials:[], submissions:[] };
+      let dataState = { subjects:[], classes:[], students:[], tasks:[], scores:[], attendance:[], materials:[], submissions:[], returns:[] };
       let attMode = null; 
       let scoreMode = 'manual'; 
 
@@ -236,14 +237,20 @@
           renderScoreButtons();
           initEventListeners();
 
+          // ตรวจสอบและโหลดข้อมูลจาก Local Storage ก่อน
+          loadFromLocalStorage();
+          
           // Check Login Session
           const savedSession = localStorage.getItem('wany_admin_session');
           if(savedSession) { 
               showAdminPanel(true); // ถ้ามี Session ครู ให้เข้าหน้าครู
           } else {
-              switchMainTab('student'); // [แก้ไข] ถ้าไม่มี Session ให้เด้งหน้า "นักเรียน" ทันที
+              switchMainTab('student'); // ถ้าไม่มี Session ให้เด้งหน้า "นักเรียน" ทันที
               syncData(); // และโหลดข้อมูลเบื้องหลัง
           }
+          
+          // บันทึกแท็บปัจจุบันเพื่อป้องกันข้อมูลหาย
+          sessionStorage.setItem('appInitialized', 'true');
       });
 
       // --- CORE LOGIC ---
@@ -257,29 +264,70 @@
              
              if(json) { 
                  dataState = json; 
+                 // ตรวจสอบว่า returns มีข้อมูลหรือไม่
+                 if(!dataState.returns) dataState.returns = [];
+                 
                  refreshUI(); 
                  updateInboxBadge();
+                 
+                 // บันทึกลง Local Storage
+                 saveToLocalStorage();
+                 
                  if(statusEl) {
                      statusEl.innerHTML = `<span class="text-green-400"><i class="fa-solid fa-wifi"></i> ออนไลน์ | นักเรียน ${json.students.length} คน</span>`;
                  }
              }
           } catch(e) { 
-              console.error(e); 
-              showToast("เชื่อมต่อ Server ไม่ได้", "bg-red-600");
-              if(statusEl) statusEl.innerHTML = `<span class="text-red-400 cursor-pointer" onclick="syncData()"><i class="fa-solid fa-rotate-right"></i> โหลดล้มเหลว</span>`;
+              console.error("Sync error:", e); 
+              
+              // ถ้าไม่มีข้อมูลใน Local Storage
+              if(dataState.students.length === 0) {
+                  showToast("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้", "bg-red-600");
+                  if(statusEl) {
+                      statusEl.innerHTML = `<span class="text-red-400"><i class="fa-solid fa-unlink"></i> ออฟไลน์</span>`;
+                  }
+              } else {
+                  // ถ้ามีข้อมูลแคชอยู่แล้ว
+                  showToast("อัพเดตข้อมูลล้มเหลว ใช้ข้อมูลจากแคช", "bg-yellow-600");
+                  if(statusEl) {
+                      statusEl.innerHTML = `<span class="text-yellow-400"><i class="fa-solid fa-triangle-exclamation"></i> ออฟไลน์ (ใช้ข้อมูลแคช)</span>`;
+                  }
+              }
           }
+      }
+
+      function saveToLocalStorage() {
+          try {
+              localStorage.setItem('wany_data_backup', JSON.stringify({
+                  timestamp: new Date().getTime(),
+                  data: dataState
+              }));
+          } catch(e) {
+              console.log("Cannot save backup:", e);
+          }
+      }
+
+      function loadFromLocalStorage() {
+          try {
+              const backup = localStorage.getItem('wany_data_backup');
+              if(backup) {
+                  const parsed = JSON.parse(backup);
+                  // ใช้ข้อมูลสำรองถ้าไม่ใหม่เกิน 2 ชั่วโมง
+                  if(new Date().getTime() - parsed.timestamp < 7200000) {
+                      dataState = parsed.data;
+                      if(!dataState.returns) dataState.returns = [];
+                      return true;
+                  }
+              }
+          } catch(e) {
+              console.log("Cannot load backup:", e);
+          }
+          return false;
       }
 
       function refreshUI() {
           refreshDropdowns();
           
-          // [FIXED] ลบการอ้างอิง task-class ที่ทำให้เกิด Error
-          // ส่วนแสดงรายการงานเพื่อแก้ไข (ถ้ามี ID นี้ใน HTML ก็จะทำงาน ถ้าไม่มีก็ข้ามไป)
-          const taskClassEl = document.getElementById('task-class');
-          if(taskClassEl && taskClassEl.value) {
-              renderTaskList(taskClassEl.value);
-          }
-
           if(!document.getElementById('admin-panel-scan').classList.contains('hidden')) {
               updateScanTaskDropdown();
               renderScoreRoster();
@@ -301,12 +349,19 @@
       async function saveAndRefresh(payload) {
           updateLocalState(payload);
           refreshSpecificUI(payload);
+          
+          // บันทึกลง Local Storage ทุกครั้งที่อัพเดต
+          saveToLocalStorage();
+          
           try {
               const res = await fetch(GOOGLE_SCRIPT_URL, { method:'POST', body:JSON.stringify(payload) });
               if(payload.action === 'login') return await res.json();
+              if(payload.action === 'returnForRevision') {
+                  showToast("ส่งกลับแก้ไขเรียบร้อยแล้ว", "bg-yellow-600");
+              }
           } catch(e) {
               console.error("Save failed", e);
-              alert("บันทึกข้อมูลล้มเหลว หรือเชื่อมต่อไม่ได้");
+              showToast("บันทึกข้อมูลล้มเหลว (ออฟไลน์)", "bg-red-600");
               return { status: 'error' };
           }
       }
@@ -345,6 +400,20 @@
           if(p.action === 'addMaterial') dataState.materials.push({id: p.id, subjectId: p.subjectId, title: p.title, link: p.link, type: p.type, desc: p.desc});
           if(p.action === 'deleteMaterial') dataState.materials = dataState.materials.filter(m => m.id != p.id);
           
+          // ฟังก์ชันใหม่: ส่งกลับแก้ไข
+          if(p.action === 'returnForRevision') {
+              dataState.returns.push({
+                  studentId: p.studentId,
+                  taskId: p.taskId,
+                  comment: p.comment,
+                  timestampISO: new Date().toISOString()
+              });
+              // ลบ submission เก่าออกจาก dataState
+              dataState.submissions = dataState.submissions.filter(
+                  s => !(s.studentId == p.studentId && s.taskId == p.taskId)
+              );
+          }
+          
           updateInboxBadge();
       }
 
@@ -353,6 +422,7 @@
           if(p.action === 'addTask') updateScanTaskDropdown();
           if(p.action === 'addScore') { renderScoreRoster(); renderIncomingSubmissions(); }
           if(p.action === 'addMaterial' || p.action === 'deleteMaterial') renderAdminMaterials();
+          if(p.action === 'returnForRevision') { renderIncomingSubmissions(); }
       }
 
       // --- UI HELPERS & AUTH ---
@@ -400,7 +470,6 @@
           populate('mat-filter-subject', dataState.subjects);
           populate('task-subject-filter', dataState.subjects); 
           populate('inbox-filter-class', dataState.classes);
-          // populate('task-class', dataState.classes); // [FIXED] เอาออกเพราะ element นี้ไม่มีแล้ว
       }
 
       function initEventListeners() {
@@ -476,11 +545,6 @@
 
           document.getElementById('task-category').onchange = (e) => { if(e.target.value === 'accum') document.getElementById('chapter-wrapper').classList.remove('hidden'); else document.getElementById('chapter-wrapper').classList.add('hidden'); };
           
-          // [FIXED] ลบ Event Listener ของ task-class ที่ไม่มีอยู่แล้ว
-          // if(document.getElementById('task-class')) {
-          //    document.getElementById('task-class').onchange = ...
-          // }
-
           const scanInp = document.getElementById('scan-score-input');
           scanInp.onkeydown = (e) => { if(e.key==='Enter'){ handleScoreScan(scanInp.value.trim()); scanInp.value=''; } };
           document.getElementById('scan-class-select').onchange = (e) => { updateScanTaskDropdown(); renderScoreRoster(); };
@@ -526,36 +590,6 @@
           const inp = document.getElementById('scan-score-input');
           inp.placeholder = mode === 'manual' ? "โหมด: Popup (ระบุเอง)" : `โหมด: ให้ ${mode} คะแนน`;
           inp.focus();
-      };
-
-      function renderTaskList(classId) {
-          const container = document.getElementById('task-list-container');
-          const wrapper = document.getElementById('task-edit-list');
-          if(!container || !wrapper) return; 
-          
-          if(!classId) { wrapper.classList.add('hidden'); return; }
-          const tasks = dataState.tasks.filter(t => t.classId == classId).reverse();
-          container.innerHTML = '';
-          if(tasks.length > 0) wrapper.classList.remove('hidden'); else wrapper.classList.add('hidden');
-          tasks.forEach(t => {
-              const div = document.createElement('div');
-              div.className = "flex justify-between items-center bg-slate-800 p-2 rounded border border-slate-700 hover:border-slate-500 transition-colors";
-              div.innerHTML = `<div class="truncate flex-1 pr-2"><span class="text-xs text-amber-500 font-bold">[${t.category}${t.chapter>0?' '+t.chapter:''}]</span> <span class="text-sm text-slate-200">${t.name}</span> <span class="text-xs text-slate-500">(${t.maxScore}คะแนน)</span></div><button onclick="openEditTaskModal('${t.id}')" class="bg-yellow-700 hover:bg-yellow-600 text-white text-xs px-2 py-1 rounded">แก้ไข</button>`;
-              container.appendChild(div);
-          });
-      }
-
-      window.openEditTaskModal = function(taskId) {
-          const t = dataState.tasks.find(x => x.id == taskId);
-          if(!t) return;
-          document.getElementById('edit-task-id').value = t.id;
-          document.getElementById('edit-task-name').value = t.name;
-          document.getElementById('edit-task-max').value = t.maxScore;
-          document.getElementById('edit-task-category').value = t.category;
-          document.getElementById('edit-task-chapter').value = t.chapter || 0;
-          document.getElementById('edit-task-desc').value = t.description || '';
-          document.getElementById('edit-task-link').value = t.fileLink || '';
-          document.getElementById('edit-task-modal').classList.remove('hidden');
       };
 
       function updateInboxBadge() {
@@ -620,7 +654,10 @@
                           <span class="text-slate-500 text-xs">/${task.maxScore}</span>
                       </div>
                       <input id="feedback-input-${sub.id}" type="text" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white" placeholder="คอมเมนต์...">
-                      <button onclick="submitGrade('${sub.id}', '${sub.studentId}', '${sub.taskId}', ${task.maxScore})" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-xs font-bold w-full">บันทึกผล</button>
+                      <div class="flex gap-2">
+                          <button onclick="submitGrade('${sub.id}', '${sub.studentId}', '${sub.taskId}', ${task.maxScore})" class="flex-1 bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-xs font-bold">ให้คะแนน</button>
+                          <button onclick="returnForRevision('${sub.id}', '${sub.studentId}', '${sub.taskId}')" class="flex-1 bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-1 rounded text-xs font-bold">ส่งกลับแก้ไข</button>
+                      </div>
                   </div>
               `;
               container.appendChild(div);
@@ -636,6 +673,26 @@
           saveAndRefresh({ action:'addScore', studentId: sid, taskId: tid, score: val, feedback: fb });
           showToast("บันทึกคะแนนเรียบร้อย");
           renderIncomingSubmissions();
+      };
+
+      // ฟังก์ชันใหม่: ส่งกลับแก้ไข
+      window.returnForRevision = function(subId, sid, tid) {
+          const feedback = document.getElementById(`feedback-input-${subId}`).value;
+          if(!feedback || feedback.trim() === '') {
+              alert("กรุณากรอกความคิดเห็นเพื่อส่งกลับให้นักเรียนแก้ไข");
+              return;
+          }
+          
+          if(confirm("คุณต้องการส่งงานกลับให้นักเรียนแก้ไขใช่หรือไม่?\n\nความคิดเห็น: " + feedback)) {
+              saveAndRefresh({ 
+                  action: 'returnForRevision', 
+                  studentId: sid, 
+                  taskId: tid, 
+                  comment: feedback 
+              });
+              showToast("ส่งกลับแก้ไขเรียบร้อยแล้ว", "bg-yellow-600");
+              renderIncomingSubmissions();
+          }
       };
 
       function updateScanTaskDropdown() {
@@ -770,7 +827,11 @@
 
       // Student Dashboard
       window.handleStudentLogin = function() {
-          if (!dataState.students || dataState.students.length === 0) { alert("⚠️ ระบบยังโหลดไม่เสร็จ"); syncData(); return; }
+          if (!dataState.students || dataState.students.length === 0) { 
+              alert("⚠️ ระบบกำลังโหลดข้อมูล... กรุณารอสักครู่");
+              setTimeout(syncData, 500); 
+              return; 
+          }
           const c = document.getElementById('student-login-id').value.trim();
           let s = dataState.students.find(x => x.code == c); 
           if(!s) {
@@ -825,37 +886,46 @@
               subjectTasks.forEach(t => {
                   const sc = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id);
                   const submission = dataState.submissions.find(x => x.studentId == s.id && x.taskId == t.id);
+                  const returned = dataState.returns?.find(x => x.studentId == s.id && x.taskId == t.id);
                   
                   let statusClass = "", statusText = "", icon = "", actionBtn = "";
                   let feedbackHtml = "";
 
-                  if(sc) { 
-                      statusClass = "bg-green-900/30 border-green-600 text-green-400 hover:bg-green-900/50"; 
+                  // ตรวจสอบสถานะส่งกลับแก้ไขก่อน
+                  if(returned) { 
+                      statusClass = "status-returned border rounded-lg p-3 flex flex-col items-center justify-center text-center transition-all relative group";
+                      statusText = "ต้องแก้ไข"; 
+                      icon = `<i class="fa-solid fa-rotate-left mb-1"></i>`;
+                      actionBtn = `<button onclick="openSubmitModal('${t.id}', '${s.id}', '${t.name}')" class="mt-1 bg-yellow-600 hover:bg-yellow-500 text-white text-[10px] px-2 py-1 rounded w-full">ส่งงานแก้ไขใหม่</button>`;
+                      feedbackHtml = `\\n\\n📝 ครูให้แก้ไข: "${returned.comment}"`;
+                  }
+                  else if(sc) { 
+                      statusClass = "bg-green-900/30 border-green-600 text-green-400 hover:bg-green-900/50 border rounded-lg p-3 flex flex-col items-center justify-center text-center transition-all relative group";
                       statusText = `${sc.score}`; 
                       icon = `<i class="fa-solid fa-check-circle mb-1"></i>`;
-                      if(sc.feedback) feedbackHtml = `\n\n💬 ครู: "${sc.feedback}"`;
+                      if(sc.feedback) feedbackHtml = `\\n\\n💬 ครู: "${sc.feedback}"`;
                   }
                   else if (submission) {
-                      statusClass = "bg-blue-900/30 border-blue-600 text-blue-400 hover:bg-blue-900/50";
+                      statusClass = "bg-blue-900/30 border-blue-600 text-blue-400 hover:bg-blue-900/50 border rounded-lg p-3 flex flex-col items-center justify-center text-center transition-all relative group";
                       statusText = "รอตรวจ";
                       icon = `<i class="fa-solid fa-hourglass-half mb-1"></i>`;
                   }
                   else if(t.dueDateISO < today) { 
-                      statusClass = "bg-red-900/30 border-red-600 text-red-400 hover:bg-red-900/50"; 
+                      statusClass = "bg-red-900/30 border-red-600 text-red-400 hover:bg-red-900/50 border rounded-lg p-3 flex flex-col items-center justify-center text-center transition-all relative group";
                       statusText = "ขาดส่ง"; 
                       icon = `<i class="fa-solid fa-circle-exclamation mb-1"></i>`; 
                       actionBtn = `<button onclick="openSubmitModal('${t.id}', '${s.id}', '${t.name}')" class="mt-1 bg-red-700 hover:bg-red-600 text-white text-[10px] px-2 py-1 rounded w-full">ส่งงาน (ช้า)</button>`;
                   }
                   else { 
-                      statusClass = "bg-yellow-900/30 border-yellow-600 text-yellow-400 hover:bg-yellow-900/50"; 
+                      statusClass = "bg-yellow-900/30 border-yellow-600 text-yellow-400 hover:bg-yellow-900/50 border rounded-lg p-3 flex flex-col items-center justify-center text-center transition-all relative group";
                       statusText = "รอส่ง"; 
                       icon = `<i class="fa-regular fa-clock mb-1"></i>`; 
                       actionBtn = `<button onclick="openSubmitModal('${t.id}', '${s.id}', '${t.name}')" class="mt-1 bg-yellow-600 hover:bg-yellow-500 text-white text-[10px] px-2 py-1 rounded w-full">ส่งงาน</button>`;
                   }
 
-                  let detailText = `งาน: ${t.name}\nเต็ม: ${t.maxScore}\n\nรายละเอียด:\n${t.description || '-'}${feedbackHtml}`;
+                  let detailText = `งาน: ${t.name}\\nเต็ม: ${t.maxScore}\\n\\nรายละเอียด:\\n${t.description || '-'}${feedbackHtml}`;
                   html += `
-                    <div class="${statusClass} border rounded-lg p-3 flex flex-col items-center justify-center text-center transition-all relative group" title="${detailText}">
+                    <div class="${statusClass}" title="${detailText}">
                         <div onclick="alert('${detailText.replace(/\n/g, '\\n').replace(/"/g, '&quot;')}')" class="cursor-pointer w-full">
                             <div class="text-[10px] text-slate-300 absolute top-1 right-2 w-full text-right truncate pl-2 opacity-50">${t.category}</div>
                             <div class="text-lg mt-2">${icon}</div>
@@ -951,6 +1021,14 @@
           });
           document.getElementById('check-total-score').textContent = total;
       };
+
+      function showToast(msg, bg = "bg-green-600") {
+          const toast = document.getElementById('toast-notification');
+          toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 ${bg} text-white px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 translate-y-20 opacity-0 font-bold border ${bg === 'bg-green-600' ? 'border-green-400' : bg === 'bg-yellow-600' ? 'border-yellow-400' : 'border-red-400'}`;
+          document.getElementById('toast-message').textContent = msg;
+          toast.classList.add('toast-show');
+          setTimeout(() => { toast.classList.remove('toast-show'); }, 3000);
+      }
   </script>
  </body>
 </html>
