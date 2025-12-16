@@ -200,17 +200,30 @@
             <h3 class="text-lg font-bold text-white mb-2"><i class="fa-solid fa-paper-plane mr-2 text-blue-400"></i>ส่งงาน</h3>
             <p class="text-sm text-slate-400 mb-4" id="submit-modal-title"></p>
             <form id="form-submit-work" class="space-y-4">
-                <input type="hidden" id="submit-task-id">
-                <input type="hidden" id="submit-student-id">
-                <div>
-                    <label class="text-xs text-slate-400 mb-1 block">วางลิงก์งาน (Google Drive, YouTube, PDF, etc.)</label>
-                    <input id="submit-link-input" type="url" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:border-blue-500 outline-none" placeholder="https://..." required>
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="document.getElementById('submit-modal').classList.add('hidden')" class="px-4 py-2 rounded bg-slate-700 text-slate-300 text-sm">ยกเลิก</button>
-                    <button type="submit" class="px-4 py-2 rounded bg-blue-600 text-white text-sm font-bold">ส่งงาน</button>
-                </div>
-            </form>
+    <input type="hidden" id="submit-task-id">
+    <input type="hidden" id="submit-student-id">
+    
+    <div>
+        <label class="text-xs text-slate-400 mb-1 block">1. ลิงก์งาน (Google Drive, YouTube, PDF)</label>
+        <input id="submit-link-input" type="url" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:border-blue-500 outline-none" placeholder="https://..." required>
+    </div>
+
+    <div>
+        <label class="text-xs text-slate-400 mb-1 block">2. ข้อความถึงครู (อธิบายงาน)</label>
+        <textarea id="submit-comment-input" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm h-16 resize-none" placeholder="เช่น รายชื่อสมาชิก, สิ่งที่ทำมา..."></textarea>
+    </div>
+
+    <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+        <label class="text-xs text-amber-400 mb-2 block font-bold"><i class="fa-solid fa-users mr-1"></i> เพิ่มเพื่อนร่วมกลุ่ม (ถ้ามี)</label>
+        <div id="friend-selector-container" class="max-h-32 overflow-y-auto grid grid-cols-1 gap-2 pr-1">
+            </div>
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="document.getElementById('submit-modal').classList.add('hidden')" class="px-4 py-2 rounded bg-slate-700 text-slate-300 text-sm">ยกเลิก</button>
+        <button type="submit" class="px-4 py-2 rounded bg-blue-600 text-white text-sm font-bold">ส่งงาน</button>
+    </div>
+</form>
         </div>
     </div>
     
@@ -531,17 +544,41 @@
           };
 
           document.getElementById('form-submit-work').onsubmit = (e) => {
-              e.preventDefault();
-              const tid = document.getElementById('submit-task-id').value;
-              const sid = document.getElementById('submit-student-id').value;
-              const link = document.getElementById('submit-link-input').value;
-              saveAndRefresh({ action: 'submitTask', taskId: tid, studentId: sid, link: link });
-              document.getElementById('submit-modal').classList.add('hidden');
-              showToast("ส่งงานเรียบร้อย");
-              if(!document.getElementById('student-dashboard').classList.contains('hidden')) {
-                  setTimeout(handleStudentLogin, 100); 
-              }
-          };
+    e.preventDefault();
+    const tid = document.getElementById('submit-task-id').value;
+    const sid = document.getElementById('submit-student-id').value;
+    const link = document.getElementById('submit-link-input').value;
+    const comment = document.getElementById('submit-comment-input').value;
+
+    // รวบรวม ID เพื่อนที่ถูกติ๊ก
+    const checkboxes = document.querySelectorAll('.friend-checkbox:checked');
+    let allStudentIds = [sid]; // ต้องมีตัวเองเสมอ
+    checkboxes.forEach(cb => {
+        allStudentIds.push(cb.value);
+    });
+
+    // ส่งข้อมูลไป Server
+    saveAndRefresh({ 
+        action: 'submitTask', 
+        taskId: tid, 
+        studentIds: allStudentIds, // ส่งเป็น Array
+        link: link,
+        comment: comment
+    });
+
+    document.getElementById('submit-modal').classList.add('hidden');
+    
+    // แจ้งเตือนแตกต่างกันตามจำนวนคน
+    if(allStudentIds.length > 1) {
+        showToast(`ส่งงานแบบกลุ่มเรียบร้อย (${allStudentIds.length} คน)`);
+    } else {
+        showToast("ส่งงานเรียบร้อย");
+    }
+
+    if(!document.getElementById('student-dashboard').classList.contains('hidden')) {
+        setTimeout(handleStudentLogin, 100); 
+    }
+};
 
           document.getElementById('task-category').onchange = (e) => { if(e.target.value === 'accum') document.getElementById('chapter-wrapper').classList.remove('hidden'); else document.getElementById('chapter-wrapper').classList.add('hidden'); };
           
@@ -591,6 +628,23 @@
           inp.placeholder = mode === 'manual' ? "โหมด: Popup (ระบุเอง)" : `โหมด: ให้ ${mode} คะแนน`;
           inp.focus();
       };
+      window.setAttMode = function(mode) {
+    attMode = mode; // <--- แก้ตรงนี้ (ของเดิมผิดเป็น scoreMode)
+    
+    // UI Update logic
+    document.getElementById('btn-att-present').classList.remove('ring-2', 'ring-green-400');
+    document.getElementById('btn-att-leave').classList.remove('ring-2', 'ring-yellow-400');
+    document.getElementById('btn-att-absent').classList.remove('ring-2', 'ring-red-400');
+    
+    if(mode === 'มา') document.getElementById('btn-att-present').classList.add('ring-2', 'ring-green-400');
+    if(mode === 'ลา') document.getElementById('btn-att-leave').classList.add('ring-2', 'ring-yellow-400');
+    if(mode === 'ขาด') document.getElementById('btn-att-absent').classList.add('ring-2', 'ring-red-400');
+    
+    const inp = document.getElementById('att-scan-input');
+    inp.disabled = false;
+    inp.placeholder = `สถานะ: ${mode} (พร้อมสแกน)`;
+    inp.focus();
+};
 
       function updateInboxBadge() {
            let count = 0;
@@ -608,62 +662,88 @@
       }
 
       window.renderIncomingSubmissions = function() {
-          const container = document.getElementById('incoming-list');
-          const filterClassId = document.getElementById('inbox-filter-class').value;
-          container.innerHTML = '';
-          
-          let pendingSubs = dataState.submissions.filter(sub => {
-               return !dataState.scores.some(sc => sc.taskId == sub.taskId && sc.studentId == sub.studentId);
-          });
+    const container = document.getElementById('incoming-list');
+    const filterClassId = document.getElementById('inbox-filter-class').value;
+    container.innerHTML = '';
 
-          if(filterClassId) {
-              pendingSubs = pendingSubs.filter(sub => {
-                  const s = dataState.students.find(st => st.id == sub.studentId);
-                  return s && s.classId == filterClassId;
-              });
-          }
+    // 1. กรองเฉพาะงานที่ยังไม่มีคะแนนในระบบ (Scores)
+    let pendingSubs = dataState.submissions.filter(sub => {
+         return !dataState.scores.some(sc => sc.taskId == sub.taskId && sc.studentId == sub.studentId);
+    });
 
-          if(pendingSubs.length === 0) { container.innerHTML = '<div class="text-center text-slate-500 py-10">ไม่มีงานที่รอตรวจ</div>'; return; }
+    // 2. กรองตามห้องเรียน (ถ้ามีการเลือก Dropdown)
+    if(filterClassId) {
+        pendingSubs = pendingSubs.filter(sub => {
+            const s = dataState.students.find(st => st.id == sub.studentId);
+            return s && s.classId == filterClassId;
+        });
+    }
 
-          pendingSubs.sort((a,b) => new Date(b.timestampISO) - new Date(a.timestampISO)); 
+    if(pendingSubs.length === 0) { 
+        container.innerHTML = '<div class="text-center text-slate-500 py-10">ไม่มีงานที่รอตรวจ</div>'; 
+        return; 
+    }
 
-          pendingSubs.forEach(sub => {
-              const task = dataState.tasks.find(t => t.id == sub.taskId);
-              const student = dataState.students.find(s => s.id == sub.studentId);
-              if(!task || !student) return;
-              const className = dataState.classes.find(c => c.id == student.classId)?.name || '-';
+    // 3. เรียงลำดับตามเวลาล่าสุด
+    pendingSubs.sort((a,b) => new Date(b.timestampISO) - new Date(a.timestampISO)); 
 
-              const div = document.createElement('div');
-              div.className = "bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col md:flex-row gap-4 items-center";
-              div.innerHTML = `
-                  <div class="flex-1 w-full">
-                      <div class="flex items-center gap-2 mb-1">
-                          <span class="bg-blue-900 text-blue-300 text-[10px] px-2 py-0.5 rounded font-bold">${className}</span>
-                          <span class="text-xs text-slate-400">${formatThaiDate(sub.timestampISO)}</span>
-                      </div>
-                      <h4 class="font-bold text-white text-sm">${task.name} <span class="text-slate-500 text-xs">(${task.maxScore} คะแนน)</span></h4>
-                      <p class="text-xs text-amber-400 font-bold mb-2">${student.name} (เลขที่ ${student.no})</p>
-                      <div class="flex gap-3 mt-2">
-                          <a href="${sub.link}" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-blue-300 px-3 py-1 rounded text-xs flex items-center gap-1 border border-slate-600"><i class="fa-solid fa-link"></i> ลิงก์งานที่ส่ง</a>
-                          ${task.fileLink ? `<a href="${task.fileLink}" target="_blank" class="bg-slate-900 text-slate-400 px-3 py-1 rounded text-xs flex items-center gap-1 border border-slate-700"><i class="fa-solid fa-file-pdf"></i> โจทย์</a>` : ''}
-                      </div>
-                  </div>
-                  <div class="flex flex-col gap-2 w-full md:w-auto bg-slate-900/50 p-3 rounded-lg border border-slate-700">
-                      <div class="flex items-center gap-2">
-                          <input id="grade-input-${sub.id}" type="number" class="w-16 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-center text-white font-bold" placeholder="0">
-                          <span class="text-slate-500 text-xs">/${task.maxScore}</span>
-                      </div>
-                      <input id="feedback-input-${sub.id}" type="text" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white" placeholder="คอมเมนต์...">
-                      <div class="flex gap-2">
-                          <button onclick="submitGrade('${sub.id}', '${sub.studentId}', '${sub.taskId}', ${task.maxScore})" class="flex-1 bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-xs font-bold">ให้คะแนน</button>
-                          <button onclick="returnForRevision('${sub.id}', '${sub.studentId}', '${sub.taskId}')" class="flex-1 bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-1 rounded text-xs font-bold">ส่งกลับแก้ไข</button>
-                      </div>
-                  </div>
-              `;
-              container.appendChild(div);
-          });
-      };
+    pendingSubs.forEach(sub => {
+        const task = dataState.tasks.find(t => t.id == sub.taskId);
+        const student = dataState.students.find(s => s.id == sub.studentId);
+        if(!task || !student) return;
+        const className = dataState.classes.find(c => c.id == student.classId)?.name || '-';
 
+        // --- [ส่วนที่เพิ่ม] สร้าง HTML สำหรับแสดงคอมเมนต์ของนักเรียน ---
+        const studentComment = sub.comment 
+            ? `<div class="bg-slate-900/80 p-2 rounded text-xs text-slate-300 mt-2 border-l-2 border-blue-500 flex gap-2 items-start">
+                 <i class="fa-regular fa-comment-dots mt-0.5 text-blue-400"></i>
+                 <span><span class="font-bold text-blue-400">นร. แจ้งว่า:</span> "${sub.comment}"</span>
+               </div>` 
+            : '';
+
+        // --- [ส่วนที่เพิ่ม] สร้าง Tag งานกลุ่ม ---
+        const groupTag = sub.groupId 
+            ? `<span class="bg-pink-900 text-pink-300 px-1.5 py-0.5 rounded text-[10px] ml-2 border border-pink-700"><i class="fa-solid fa-users"></i> งานกลุ่ม</span>` 
+            : '';
+
+        const div = document.createElement('div');
+        div.className = "bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col md:flex-row gap-4 items-center";
+        
+        div.innerHTML = `
+            <div class="flex-1 w-full">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="bg-blue-900 text-blue-300 text-[10px] px-2 py-0.5 rounded font-bold">${className}</span>
+                    <span class="text-xs text-slate-400">${formatThaiDate(sub.timestampISO)}</span>
+                </div>
+                <h4 class="font-bold text-white text-sm">${task.name} <span class="text-slate-500 text-xs">(${task.maxScore} คะแนน)</span></h4>
+                
+                <p class="text-xs text-amber-400 font-bold mb-2">
+                    ${student.name} (เลขที่ ${student.no}) ${groupTag}
+                </p>
+                
+                ${studentComment}
+
+                <div class="flex gap-3 mt-2">
+                    <a href="${sub.link}" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-blue-300 px-3 py-1 rounded text-xs flex items-center gap-1 border border-slate-600"><i class="fa-solid fa-link"></i> ลิงก์งานที่ส่ง</a>
+                    ${task.fileLink ? `<a href="${task.fileLink}" target="_blank" class="bg-slate-900 text-slate-400 px-3 py-1 rounded text-xs flex items-center gap-1 border border-slate-700"><i class="fa-solid fa-file-pdf"></i> โจทย์</a>` : ''}
+                </div>
+            </div>
+            
+            <div class="flex flex-col gap-2 w-full md:w-auto bg-slate-900/50 p-3 rounded-lg border border-slate-700">
+                <div class="flex items-center gap-2">
+                    <input id="grade-input-${sub.id}" type="number" class="w-16 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-center text-white font-bold" placeholder="0">
+                    <span class="text-slate-500 text-xs">/${task.maxScore}</span>
+                </div>
+                <input id="feedback-input-${sub.id}" type="text" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white" placeholder="คอมเมนต์กลับ...">
+                <div class="flex gap-2">
+                    <button onclick="submitGrade('${sub.id}', '${sub.studentId}', '${sub.taskId}', ${task.maxScore})" class="flex-1 bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-xs font-bold">ให้คะแนน</button>
+                    <button onclick="returnForRevision('${sub.id}', '${sub.studentId}', '${sub.taskId}')" class="flex-1 bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-1 rounded text-xs font-bold">ส่งกลับแก้ไข</button>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+};
       window.submitGrade = function(subId, sid, tid, max) {
           const val = document.getElementById(`grade-input-${subId}`).value;
           const fb = document.getElementById(`feedback-input-${subId}`).value;
@@ -988,12 +1068,44 @@
       function downloadCSV(csv,n) { const l=document.createElement("a"); l.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"})); l.download=n; l.click(); }
       
       window.openSubmitModal = function(tid, sid, tname) {
-          document.getElementById('submit-task-id').value = tid;
-          document.getElementById('submit-student-id').value = sid;
-          document.getElementById('submit-modal-title').textContent = "กำลังส่งงาน: " + tname;
-          document.getElementById('submit-link-input').value = "";
-          document.getElementById('submit-modal').classList.remove('hidden');
-      };
+    document.getElementById('submit-task-id').value = tid;
+    document.getElementById('submit-student-id').value = sid;
+    document.getElementById('submit-modal-title').textContent = "กำลังส่งงาน: " + tname;
+    document.getElementById('submit-link-input').value = "";
+    document.getElementById('submit-comment-input').value = ""; // Clear comment
+
+    // Render Friend List
+    const container = document.getElementById('friend-selector-container');
+    container.innerHTML = '';
+    
+    // หานักเรียนคนปัจจุบัน เพื่อรู้ห้อง (ClassId)
+    const currentStudent = dataState.students.find(s => s.id == sid);
+    if(currentStudent) {
+        // กรองเพื่อนในห้องเดียวกัน (ไม่รวมตัวเอง)
+        const friends = dataState.students
+            .filter(s => s.classId == currentStudent.classId && s.id != sid)
+            .sort((a,b) => Number(a.no) - Number(b.no));
+        
+        if(friends.length === 0) {
+            container.innerHTML = '<div class="text-xs text-slate-500 text-center">- ไม่มีรายชื่อเพื่อน -</div>';
+        }
+
+        friends.forEach(f => {
+            const div = document.createElement('div');
+            div.className = "flex items-center gap-2 bg-slate-900 p-2 rounded border border-slate-700 hover:border-blue-500 cursor-pointer";
+            // Checkbox
+            div.innerHTML = `
+                <input type="checkbox" id="friend-${f.id}" value="${f.id}" class="accent-blue-500 w-4 h-4 rounded cursor-pointer friend-checkbox">
+                <label for="friend-${f.id}" class="text-xs text-slate-300 cursor-pointer select-none flex-1">
+                    <span class="font-bold text-white mr-1">${f.no}.</span> ${f.name}
+                </label>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    document.getElementById('submit-modal').classList.remove('hidden');
+};
       
       window.performCheck = function() {
           const txt = document.getElementById('check-student-input').value.trim();
