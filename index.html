@@ -544,6 +544,7 @@
     }
 
     function checkSmartSchedule() {
+        if(!dataState.schedules) return;
         const now = new Date();
         const day = now.getDay();
         const timeStr = now.toTimeString().slice(0,5); 
@@ -759,27 +760,41 @@
             if(e.key === 'Enter') document.getElementById('btn-modal-save').click();
         };
 
-        // --- 2. Main Scan Input (Enter -> Open Modal) ---
+        // --- 2. Main Scan Input (Enter -> Check Mode) ---
         document.getElementById('scan-score-input').onkeydown = (e) => {
             if(e.key === 'Enter') {
                 const val = e.target.value.trim();
                 const cid = document.getElementById('scan-class-select').value;
                 if(!cid) return;
                 const s = dataState.students.find(st => (st.code == val || st.no == val) && st.classId == cid);
+                
                 if(s) {
                     const tid = document.getElementById('scan-task-select').value;
                     const t = dataState.tasks.find(x=>x.id==tid);
                     if(t) {
-                        pendingScore = { s, t };
-                        document.getElementById('score-modal').classList.remove('hidden');
-                        document.getElementById('modal-task-name').textContent = t.name;
-                        document.getElementById('modal-student-name').textContent = s.name;
-                        document.getElementById('modal-max-score').textContent = t.maxScore;
-                        const sc = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id);
-                        document.getElementById('modal-score-input').value = sc ? sc.score : '';
-                        setTimeout(() => document.getElementById('modal-score-input').focus(), 100);
-                        e.target.value = '';
+                        // FIX: CHECK SCORE MODE
+                        if(scoreMode !== 'manual') {
+                            if(Number(scoreMode) > Number(t.maxScore)) {
+                                alert("คะแนนที่เลือกเกินคะแนนเต็มของงานนี้!");
+                            } else {
+                                saveAndRefresh({action:'addScore', studentId:s.id, taskId:t.id, score:scoreMode});
+                                showToast(`${s.name} : ${scoreMode} คะแนน`, "bg-green-600");
+                            }
+                        } else {
+                            pendingScore = { s, t };
+                            document.getElementById('score-modal').classList.remove('hidden');
+                            document.getElementById('modal-task-name').textContent = t.name;
+                            document.getElementById('modal-student-name').textContent = s.name;
+                            document.getElementById('modal-max-score').textContent = t.maxScore;
+                            const sc = dataState.scores.find(x => x.studentId == s.id && x.taskId == t.id);
+                            document.getElementById('modal-score-input').value = sc ? sc.score : '';
+                            setTimeout(() => document.getElementById('modal-score-input').focus(), 100);
+                        }
+                        e.target.value = ''; // Clear for next student
                     }
+                } else {
+                    showToast("ไม่พบนักเรียน", "bg-red-600");
+                    e.target.value = '';
                 }
             }
         };
