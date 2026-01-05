@@ -463,7 +463,8 @@
 
     async function syncData() {
         try {
-            const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData`);
+            // FIX: Added timestamp to prevent browser caching
+            const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData&t=${new Date().getTime()}`);
             const json = await res.json();
             if(json) { 
                 dataState = json; 
@@ -783,7 +784,7 @@
             }
         };
 
-        // --- 3. MODIFIED: Attendance Scanner Logic ---
+        // --- 3. Attendance Scanner Logic ---
         document.getElementById('att-scan-input').onkeydown = (e) => {
             if(e.key === 'Enter') {
                 const val = e.target.value.trim();
@@ -906,13 +907,16 @@
     }
     
     // --- VISUAL HIGHLIGHTS (ATTENDANCE) ---
+    // FIX: Added safer date comparison for Google Sheet timestamp variations
     function renderAttRoster() {
         const cid = document.getElementById('att-class-select').value, div = document.getElementById('att-roster-grid'), date = document.getElementById('att-date-input').value; div.innerHTML = ''; if(!cid) return;
         
         let p=0, l=0, a=0;
         
         dataState.students.filter(s => s.classId == cid).sort((a,b)=>Number(a.no)-Number(b.no)).forEach(s => {
-             const log = dataState.attendance.find(a => a.studentId==s.id && a.date == date), st = log ? log.status : 'none';
+             // Safe date compare: Match exact string OR Match substring (YYYY-MM-DD)
+             const log = dataState.attendance.find(a => a.studentId==s.id && (a.date == date || (a.date && a.date.substring(0,10) == date)));
+             const st = log ? log.status : 'none';
              if(st=='มา') p++; if(st=='ลา') l++; if(st=='ขาด') a++;
              
              const c = st=='มา'?'status-done':(st=='ลา'?'bg-yellow-500/20 border-yellow-500 text-yellow-500':(st=='ขาด'?'bg-red-500/20 border-red-500 text-red-500':'status-none'));
@@ -927,7 +931,7 @@
         document.getElementById('stat-absent').textContent = a;
     }
     
-    // --- MODIFIED: Auto Focus Scanner ---
+    // --- Auto Focus Scanner ---
     function setAttMode(m) { 
         attMode = m; 
         document.getElementById('btn-att-present').classList.remove('btn-att-active-present');
@@ -997,7 +1001,7 @@
         });
     }
 
-    // --- STUDENT SIDE FUNCTIONS (ENHANCED) ---
+    // --- STUDENT SIDE FUNCTIONS ---
     function handleStudentLogin() {
          if (!dataState.students || dataState.students.length === 0) { 
             alert("⚠️ ระบบกำลังโหลดข้อมูล... กรุณารอสักครู่"); setTimeout(syncData, 500); return; 
