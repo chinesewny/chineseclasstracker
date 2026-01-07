@@ -106,7 +106,7 @@ function updateLocalState(p) {
     }
     if(p.action === 'addAttendance') {
          const idx = dataState.attendance.findIndex(a => a.studentId == p.studentId && a.date == p.date);
-         if(idx >= 0) dataState.attendance[idx].status = p.status; else dataState.attendance.push({studentId:p.studentId, classId:p.classId, date:p.date, status:p.status});
+        if(idx >= 0) dataState.attendance[idx].status = p.status; else dataState.attendance.push({studentId:p.studentId, classId:p.classId, date:p.date, status:p.status});
     }
     if(p.action === 'submitTask') {
         p.studentIds.forEach(sid => {
@@ -115,7 +115,7 @@ function updateLocalState(p) {
             else dataState.submissions.push({taskId:p.taskId, studentId:sid, link:p.link, timestampISO: new Date().toISOString(), comment: p.comment});
         });
     }
-    if(p.action === 'addMaterial') { // Added material handler
+    if(p.action === 'addMaterial') { 
         dataState.materials = dataState.materials || [];
         dataState.materials.push({id:p.id, subjectId:p.subjectId, title:p.title, link:p.link});
     }
@@ -139,9 +139,12 @@ function initEventListeners() {
     };
     
     // Forms
-    document.getElementById('form-subject').onsubmit = (e) => { e.preventDefault(); handleSave({ action:'addSubject', id:Date.now(), name:document.getElementById('subject-name').value }); e.target.reset(); };
-    document.getElementById('form-class').onsubmit = (e) => { e.preventDefault(); handleSave({ action:'addClass', id:Date.now(), name:document.getElementById('class-name').value, subjectId:document.getElementById('class-subject-ref').value }); e.target.reset(); };
-    document.getElementById('form-student').onsubmit = (e) => { e.preventDefault(); handleSave({ action: 'addStudent', id: Date.now(), classId: document.getElementById('student-class').value, no: document.getElementById('student-no').value, code: document.getElementById('student-id').value, name: document.getElementById('student-name').value }); e.target.reset(); };
+    document.getElementById('form-subject').onsubmit = (e) => { e.preventDefault();
+        handleSave({ action:'addSubject', id:Date.now(), name:document.getElementById('subject-name').value }); e.target.reset(); };
+    document.getElementById('form-class').onsubmit = (e) => { e.preventDefault(); handleSave({ action:'addClass', id:Date.now(), name:document.getElementById('class-name').value, subjectId:document.getElementById('class-subject-ref').value }); e.target.reset();
+    };
+    document.getElementById('form-student').onsubmit = (e) => { e.preventDefault(); handleSave({ action: 'addStudent', id: Date.now(), classId: document.getElementById('student-class').value, no: document.getElementById('student-no').value, code: document.getElementById('student-id').value, name: document.getElementById('student-name').value });
+        e.target.reset(); };
     
     document.getElementById('form-task').onsubmit = (e) => { 
         e.preventDefault();
@@ -162,14 +165,12 @@ function initEventListeners() {
         const period = document.getElementById('sch-period').value;
         const classId = document.getElementById('sch-class').value;
         if(!classId) return showToast("เลือกห้องเรียน", "warning");
-
-        // Optimistic update for schedule
+        
         if(!dataState.schedules) dataState.schedules = [];
-        // Remove old entry if same day/period
         dataState.schedules = dataState.schedules.filter(s => !(s.day == day && s.period == period));
         dataState.schedules.push({ day, period, classId });
         
-        handleSave({ action:'updateSchedule', schedule: dataState.schedules }); // Assume API handles full update or specific logic
+        handleSave({ action:'updateSchedule', schedule: dataState.schedules });
         renderScheduleList(dataState.schedules, dataState.classes);
         showToast("บันทึกตารางสอนแล้ว");
     };
@@ -212,25 +213,26 @@ function initEventListeners() {
             } else { showToast("ไม่พบนักเรียน", "error"); e.target.value=''; }
         }
     };
-
+    
     document.getElementById('att-scan-input').onkeydown = (e) => {
         if(e.key === 'Enter') {
             const val = e.target.value.trim();
             const cid = document.getElementById('att-class-select').value;
             const date = document.getElementById('att-date-input').value;
             if(!cid || !attMode) return showToast("เลือกห้อง/สถานะก่อน", "warning");
-            
             const s = dataState.students.find(st => (st.code == val || st.no == val) && st.classId == cid);
             if(s) {
                 handleSave({action:'addAttendance', studentId:s.id, classId:cid, date:date, status:attMode});
                 showToast(`${s.name} : ${attMode}`, "success");
                 e.target.value = '';
-            } else { showToast("ไม่พบนักเรียน", "error"); e.target.value=''; }
+            } else { showToast("ไม่พบนักเรียน", "error"); e.target.value='';
+            }
         }
     }
     
     // Select Change
-    document.getElementById('scan-class-select').onchange = () => { updateScanTaskDropdown(); renderScoreRoster(); };
+    document.getElementById('scan-class-select').onchange = () => { updateScanTaskDropdown();
+        renderScoreRoster(); };
     document.getElementById('scan-task-select').onchange = renderScoreRoster;
     document.getElementById('att-class-select').onchange = renderAttRoster;
     document.getElementById('att-date-input').onchange = renderAttRoster;
@@ -244,7 +246,7 @@ function initEventListeners() {
         document.getElementById('score-modal').classList.add('hidden');
     };
     document.getElementById('modal-score-input').onkeydown = (e) => { if(e.key==='Enter') document.getElementById('btn-modal-save').click(); };
-
+    
     // Student Submit Modal
     document.getElementById('form-submit-work').onsubmit = (e) => {
         e.preventDefault();
@@ -252,7 +254,6 @@ function initEventListeners() {
         const mainSid = document.getElementById('submit-student-id').value;
         const link = document.getElementById('submit-link-input').value;
         const comment = document.getElementById('submit-comment-input').value;
-        
         // Collect friends
         const friendCbs = document.querySelectorAll('.friend-checkbox:checked');
         const sids = [mainSid, ...Array.from(friendCbs).map(cb => cb.value)];
@@ -272,7 +273,8 @@ function updateScanTaskDropdown() {
 
 function renderScoreRoster() {
     const cid = document.getElementById('scan-class-select').value, taskId = document.getElementById('scan-task-select').value, div = document.getElementById('score-roster-grid'); 
-    div.innerHTML = ''; if(!cid || !taskId) return; 
+    div.innerHTML = '';
+    if(!cid || !taskId) return; 
     dataState.students.filter(s => s.classId == cid).sort((a,b)=>Number(a.no)-Number(b.no)).forEach(s => { 
         const sc = dataState.scores.find(x => x.studentId == s.id && x.taskId == taskId), val = sc ? sc.score : '-'; 
         const el = document.createElement('div'); el.className = `status-box ${sc ? 'status-done' : 'status-none'} p-2 flex flex-col items-center justify-center cursor-pointer`; 
@@ -283,15 +285,16 @@ function renderScoreRoster() {
             document.getElementById('modal-student-name').textContent = s.name; 
             document.getElementById('modal-max-score').textContent = pendingScore.t.maxScore; 
             document.getElementById('modal-score-input').value = val == '-' ? '' : val; 
-            setTimeout(() => document.getElementById('modal-score-input').focus(), 100); 
+            setTimeout(() => document.getElementById('modal-score-input').focus(), 100);
         };
         el.innerHTML = `<div class="text-xs opacity-70">No. ${s.no}</div><div class="font-bold text-center text-xs truncate w-full">${s.name}</div><div class="text-xl font-bold mt-1">${val}</div>`; div.appendChild(el); 
-    }); 
+    });
 }
 
 function renderAttRoster() {
     const cid = document.getElementById('att-class-select').value, div = document.getElementById('att-roster-grid'), date = document.getElementById('att-date-input').value; 
-    div.innerHTML = ''; if(!cid) return;
+    div.innerHTML = '';
+    if(!cid) return;
     let p=0, l=0, a=0;
     dataState.students.filter(s => s.classId == cid).sort((a,b)=>Number(a.no)-Number(b.no)).forEach(s => {
         const log = dataState.attendance.find(x => x.studentId==s.id && x.date.startsWith(date));
@@ -299,6 +302,7 @@ function renderAttRoster() {
         if(st=='มา') p++; if(st=='ลา') l++; if(st=='ขาด') a++;
         const c = st=='มา'?'status-done':(st=='ลา'?'bg-yellow-500/20 border-yellow-500 text-yellow-500':(st=='ขาด'?'bg-red-500/20 border-red-500 text-red-500':'status-none'));
         const el = document.createElement('div'); el.className = `status-box ${c} p-3 flex flex-col items-center justify-center cursor-pointer border`;
+        
         el.onclick = () => { if(attMode) handleSave({action:'addAttendance', studentId:s.id, classId:cid, date:date, status:attMode}); };
         el.innerHTML = `<div class="text-xs opacity-70">No. ${s.no}</div><div class="font-bold text-center text-sm">${s.name}</div><div class="text-[10px] mt-1">${st}</div>`; div.appendChild(el);
     });
@@ -306,7 +310,8 @@ function renderAttRoster() {
 }
 
 function renderGradeReport() {
-    const cid = document.getElementById('report-class').value, tbody = document.getElementById('report-table-body'); tbody.innerHTML = ''; if(!cid) return;
+    const cid = document.getElementById('report-class').value, tbody = document.getElementById('report-table-body');
+    tbody.innerHTML = ''; if(!cid) return;
     const tasks = dataState.tasks.filter(t => t.classId == cid);
     dataState.students.filter(s => s.classId == cid).sort((a,b)=>Number(a.no)-Number(b.no)).forEach((s, idx) => {
         const { chapScores, midterm, final, total } = calculateScores(s.id, tasks, dataState.scores);
@@ -318,7 +323,8 @@ function renderGradeReport() {
 function renderIncomingSubmissions() {
     const container = document.getElementById('incoming-list'); container.innerHTML = '';
     let pending = dataState.submissions.filter(sub => !dataState.scores.some(sc => sc.taskId == sub.taskId && sc.studentId == sub.studentId));
-    if(pending.length === 0) { container.innerHTML = '<div class="text-center text-white/50 py-10">ไม่มีงานที่รอตรวจ</div>'; return; }
+    if(pending.length === 0) { container.innerHTML = '<div class="text-center text-white/50 py-10">ไม่มีงานที่รอตรวจ</div>'; return;
+    }
     pending.sort((a,b) => new Date(b.timestampISO) - new Date(a.timestampISO)).forEach(sub => {
         const task = dataState.tasks.find(t => t.id == sub.taskId);
         const student = dataState.students.find(s => s.id == sub.studentId);
@@ -333,13 +339,15 @@ window.switchMainTab = (t) => {
     document.getElementById('section-student').classList.add('hidden');
     document.getElementById(`section-${t}`).classList.remove('hidden');
     const btnA = document.getElementById('tab-btn-admin'), btnS = document.getElementById('tab-btn-student');
-    if(t=='admin'){ btnA.className="px-6 py-2 rounded-full text-sm font-bold bg-white text-blue-900 shadow-lg"; btnS.className="px-6 py-2 rounded-full text-sm font-bold text-white/50 hover:text-white"; }
-    else { btnS.className="px-6 py-2 rounded-full text-sm font-bold bg-white text-blue-900 shadow-lg"; btnA.className="px-6 py-2 rounded-full text-sm font-bold text-white/50 hover:text-white"; }
+    if(t=='admin'){ btnA.className="px-6 py-2 rounded-full text-sm font-bold bg-white text-blue-900 shadow-lg";
+    btnS.className="px-6 py-2 rounded-full text-sm font-bold text-white/50 hover:text-white"; }
+    else { btnS.className="px-6 py-2 rounded-full text-sm font-bold bg-white text-blue-900 shadow-lg";
+    btnA.className="px-6 py-2 rounded-full text-sm font-bold text-white/50 hover:text-white"; }
 };
 
 window.switchAdminSubTab = (t) => {
     document.querySelectorAll('.admin-panel').forEach(p=>p.classList.add('hidden')); 
-    document.getElementById(`admin-panel-${t}`).classList.remove('hidden'); 
+    document.getElementById(`admin-panel-${t}`).classList.remove('hidden');
     document.querySelectorAll('.menu-btn').forEach(b => b.className="menu-btn glass-ios hover:bg-white/10 text-white/70 rounded-2xl py-3 font-bold");
     document.getElementById(`menu-${t}`).className="menu-btn btn-blue rounded-2xl py-3 font-bold shadow-lg text-white";
     refreshUI();
@@ -356,12 +364,12 @@ window.handleAdminLogout = () => {
 };
 
 window.renderScoreButtons = () => { 
-    const c = document.getElementById('score-buttons-container'); if(!c) return; c.innerHTML=''; 
+    const c = document.getElementById('score-buttons-container'); if(!c) return; c.innerHTML='';
     [5,6,7,8,9,10].forEach(i => { const b = document.createElement('button'); b.textContent=i; b.className="btn-score py-2 rounded-lg border border-white/20 bg-white/5 text-white hover:bg-white/10"; b.onclick=()=>setScoreMode(i); c.appendChild(b); }); 
 };
 
 window.setScoreMode = (m) => {
-    scoreMode = m; 
+    scoreMode = m;
     document.querySelectorAll('.btn-score').forEach(b => {
         b.classList.remove('btn-score-active');
         if(b.textContent == m) b.classList.add('btn-score-active');
@@ -381,7 +389,8 @@ window.setAttMode = (m) => {
 };
 
 window.renderTaskClassCheckboxes = () => {
-    const subId = document.getElementById('task-subject-filter').value; const div = document.getElementById('task-class-checkboxes'); div.innerHTML='';
+    const subId = document.getElementById('task-subject-filter').value;
+    const div = document.getElementById('task-class-checkboxes'); div.innerHTML='';
     dataState.classes.filter(c=>c.subjectId==subId).forEach(c => { div.innerHTML+=`<label class="flex items-center gap-2 p-2 rounded hover:bg-white/10 cursor-pointer"><input type="checkbox" value="${c.id}" class="accent-yellow-500 w-4 h-4 rounded"><span class="text-xs text-white/80">${c.name}</span></label>`; });
 };
 
@@ -392,13 +401,16 @@ window.submitGrade = (subId, sid, tid, max) => {
 };
 
 window.updateInboxBadge = () => {
-    let count = 0; dataState.submissions.forEach(sub => { if(!dataState.scores.some(sc => sc.taskId == sub.taskId && sc.studentId == sub.studentId)) count++; });
-    const badge = document.getElementById('badge-homework'); count > 0 ? (badge.classList.remove('hidden'), badge.textContent = count > 99 ? '99+' : count) : badge.classList.add('hidden');
+    let count = 0;
+    dataState.submissions.forEach(sub => { if(!dataState.scores.some(sc => sc.taskId == sub.taskId && sc.studentId == sub.studentId)) count++; });
+    const badge = document.getElementById('badge-homework');
+    count > 0 ? (badge.classList.remove('hidden'), badge.textContent = count > 99 ? '99+' : count) : badge.classList.add('hidden');
 };
 
 window.checkSmartSchedule = () => {
     if(!dataState.schedules) return;
-    const now = new Date(); const day = now.getDay(); const timeStr = now.toTimeString().slice(0,5); 
+    const now = new Date(); const day = now.getDay();
+    const timeStr = now.toTimeString().slice(0,5); 
     const currentPeriod = PERIODS.find(p => timeStr >= p.start && timeStr <= p.end);
     const banner = document.getElementById('smart-att-banner');
     if(currentPeriod) {
@@ -438,8 +450,8 @@ window.renderStudentDashboard = (s) => {
         const subjectTasks = myTasks.filter(t => t.subjectId == subId);
         const { chapScores, midterm, final, total } = calculateScores(s.id, subjectTasks, dataState.scores);
         const grade = calGrade(total);
-        // (Simplified Rendering logic due to length - using template literal)
-        container.innerHTML += `<div class="glass-ios p-5 rounded-3xl border border-white/10"><h3 class="font-bold text-lg text-white mb-3 border-l-4 border-yellow-500 pl-3 flex justify-between">${dataState.subjects.find(x=>x.id==subId)?.name} <span class="text-sm bg-white/10 px-2 rounded">Grade ${grade}</span></h3><div class="overflow-x-auto mb-4 bg-black/20 rounded-xl"><table class="w-full text-sm text-center text-white/80"><thead class="bg-white/5 text-xs"><tr><th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th><th>C6</th><th class="text-blue-400">Mid</th><th class="text-red-400">Fin</th><th>Tot</th></tr></thead><tbody><tr>${chapScores.map(c=>`<td>${c}</td>`).join('')}<td>${midterm}</td><td>${final}</td><td>${total}</td></tr></tbody></table></div><div class="grid grid-cols-4 gap-2">${renderStudentTasks(s, subjectTasks)}</div></div>`;
+        container.innerHTML += `<div class="glass-ios p-5 rounded-3xl border border-white/10"><h3 class="font-bold text-lg text-white mb-3 border-l-4 border-yellow-500 pl-3 flex justify-between">${dataState.subjects.find(x=>x.id==subId)?.name} 
+        <span class="text-sm bg-white/10 px-2 rounded">Grade ${grade}</span></h3><div class="overflow-x-auto mb-4 bg-black/20 rounded-xl"><table class="w-full text-sm text-center text-white/80"><thead class="bg-white/5 text-xs"><tr><th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th><th>C6</th><th class="text-blue-400">Mid</th><th class="text-red-400">Fin</th><th>Tot</th></tr></thead><tbody><tr>${chapScores.map(c=>`<td>${c}</td>`).join('')}<td>${midterm}</td><td>${final}</td><td>${total}</td></tr></tbody></table></div><div class="grid grid-cols-4 gap-2">${renderStudentTasks(s, subjectTasks)}</div></div>`;
     });
     // Attendance
     document.getElementById('std-att-body').innerHTML = dataState.attendance.filter(a=>a.studentId==s.id).map(a=>`<tr><td class="px-3 py-2 text-white/50">${formatThaiDate(a.date)}</td><td class="px-3 py-2 text-center ${a.status=='มา'?'text-green-400':'text-red-400'}">${a.status}</td></tr>`).join('');
@@ -457,21 +469,17 @@ function renderStudentTasks(s, tasks) {
 window.openSubmitModal = (tid, sid) => {
     document.getElementById('submit-task-id').value = tid;
     document.getElementById('submit-student-id').value = sid;
-    
     // Render friend selector (same class only)
     const me = dataState.students.find(s => s.id == sid);
     const friends = dataState.students.filter(s => s.classId == me.classId && s.id != me.id).sort((a,b) => Number(a.no)-Number(b.no));
     const div = document.getElementById('friend-selector-container');
     div.innerHTML = friends.map(f => `<label class="flex items-center gap-2 text-xs text-white/70 hover:bg-white/5 p-1 rounded cursor-pointer"><input type="checkbox" value="${f.id}" class="friend-checkbox accent-yellow-500"> No.${f.no} ${f.name}</label>`).join('');
-    
     const taskName = dataState.tasks.find(t=>t.id==tid)?.name;
     document.getElementById('submit-modal-title').textContent = taskName;
     document.getElementById('submit-modal').classList.remove('hidden');
 };
 
 window.logoutStudent = () => { location.reload(); };
-
-// --- NEW FUNCTIONS FIX (Added missing exports) ---
 
 window.printOfficialReport = () => {
     const cid = document.getElementById('report-class').value;
@@ -496,7 +504,6 @@ window.printOfficialReport = () => {
             <td>${grade}</td>
         </tr>`;
     });
-    
     document.getElementById('print-subtitle').textContent = `ระดับชั้น ${cls.name}`;
     window.print();
 };
@@ -508,14 +515,13 @@ window.exportGradeCSV = () => {
     const cls = dataState.classes.find(c => c.id == cid);
     const tasks = dataState.tasks.filter(t => t.classId == cid);
     let csvContent = "\uFEFFลำดับ,รหัส,ชื่อ-นามสกุล,บทที่ 1,บทที่ 2,บทที่ 3,บทที่ 4,บทที่ 5,บทที่ 6,กลางภาค,ปลายภาค,รวม,เกรด\n";
-
     dataState.students.filter(s => s.classId == cid).sort((a,b)=>Number(a.no)-Number(b.no)).forEach((s, idx) => {
         const { chapScores, midterm, final, total } = calculateScores(s.id, tasks, dataState.scores);
         const grade = calGrade(total);
         const row = [
             s.no || idx + 1,
             s.code,
-            `"${s.name}"`, // Quote name in case of commas
+            `"${s.name}"`, 
             ...chapScores,
             midterm,
             final,
@@ -524,7 +530,6 @@ window.exportGradeCSV = () => {
         ];
         csvContent += row.join(",") + "\n";
     });
-
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -546,7 +551,7 @@ window.exportAttendanceCSV = () => {
 
     dataState.students.filter(s => s.classId == cid).sort((a,b)=>Number(a.no)-Number(b.no)).forEach((s, idx) => {
         const log = dataState.attendance.find(x => x.studentId == s.id && x.date.startsWith(date));
-        const status = log ? log.status : 'ขาด'; // Default to absent if no record? or 'ยังไม่เช็ค'
+        const status = log ? log.status : 'ขาด';
         const row = [
             s.no || idx+1,
             s.code,
@@ -555,7 +560,6 @@ window.exportAttendanceCSV = () => {
         ];
         csvContent += row.join(",") + "\n";
     });
-
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
