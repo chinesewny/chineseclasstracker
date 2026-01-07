@@ -1,5 +1,5 @@
 // *** สำคัญ: เปลี่ยน URL ด้านล่างเป็นของคุณ ***
-const API_URL = 'https://script.google.com/macros/s/AKfycbx...โค้ดยาวๆของคุณ.../exec'; 
+const API_URL = 'https://script.google.com/macros/s/AKfycbwQNjMSE06u5xO4dtyipa5P-YzoaicppubdwlUgMpaX4L4TUjk3-xY2PRnzhS42AxZe/exec'; 
 
 export async function fetchData() {
     try {
