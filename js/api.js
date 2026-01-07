@@ -1,4 +1,4 @@
-// *** สำคัญ: เปลี่ยน URL ด้านล่างเป็นของคุณ ***
+// *** เปลี่ยน URL นี้เป็นของคุณ ***
 const API_URL = 'https://script.google.com/macros/s/AKfycbwQNjMSE06u5xO4dtyipa5P-YzoaicppubdwlUgMpaX4L4TUjk3-xY2PRnzhS42AxZe/exec'; 
 
 export async function fetchData() {
@@ -8,8 +8,7 @@ export async function fetchData() {
         return await res.json();
     } catch (e) {
         console.error("Fetch Error", e);
-        // Return null เพื่อให้ main.js รู้ว่าโหลดไม่ได้ (Offline Mode)
-        return null;
+        return null; // Return null กรณี Offline
     }
 }
 
