@@ -37,7 +37,6 @@ export function renderScheduleList(schedules, classes) {
     
     // เรียงวันและคาบ
     schedules.sort((a, b) => (a.day * 10 + a.period) - (b.day * 10 + b.period));
-    
     const days = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสฯ', 'ศุกร์', 'เสาร์'];
     
     schedules.forEach(s => {
