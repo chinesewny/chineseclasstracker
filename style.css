@@ -243,3 +243,244 @@ button:disabled {
   margin-bottom: 10px;
   display: block;
 }
+/* เพิ่มในส่วนท้ายของไฟล์ style.css ที่มีอยู่ */
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Button disabled state */
+button:disabled,
+button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Print styles improvement */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0.5cm;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-size: 11pt;
+  }
+  
+  #app-root,
+  .no-print,
+  #global-loader,
+  header,
+  nav,
+  footer {
+    display: none !important;
+  }
+  
+  #print-area {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    background: white !important;
+    color: black !important;
+  }
+  
+  #print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+    page-break-inside: auto;
+  }
+  
+  #print-table th,
+  #print-table td {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    text-align: center;
+    color: black;
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  
+  #print-table thead {
+    display: table-header-group;
+  }
+  
+  #print-table tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  
+  .print-header-row td {
+    border: none !important;
+    padding: 10px 0;
+    text-align: center;
+  }
+  
+  .column-header th {
+    background-color: #f0f0f0 !important;
+    color: black !important;
+    font-weight: bold;
+    border: 1px solid #000 !important;
+  }
+  
+  .print-header-row img {
+    width: 60px;
+    height: auto;
+    margin: 0 auto 10px;
+    display: block;
+  }
+  
+  .print-header-row h2 {
+    font-size: 16pt;
+    font-weight: bold;
+    margin: 5px 0;
+  }
+  
+  .print-header-row h3 {
+    font-size: 14pt;
+    margin: 5px 0;
+  }
+  
+  #print-subtitle {
+    font-size: 12pt;
+    margin: 5px 0 15px;
+  }
+}
+
+/* Loading states */
+.loading {
+  position: relative;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Scrollbar styling for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Selection color */
+::selection {
+  background: rgba(59, 130, 246, 0.5);
+  color: white;
+}
+
+/* Focus outline for accessibility */
+:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .glass-ios {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  
+  .grid-cols-2 {
+    grid-template-columns: repeat(1, 1fr) !important;
+  }
+  
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .grid-cols-6 {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* Error state for inputs */
+.input-error {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.input-success {
+  border-color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.1) !important;
+}
+
+/* Tooltip */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]:hover::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 100;
+  margin-bottom: 5px;
+}
+
+[data-tooltip]:hover::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.8);
+  z-index: 100;
+}
