@@ -1,5 +1,5 @@
 // ChineseClass System - Main Application
-// รวมทุกฟังก์ชันในไฟล์เดียวเพื่อหลีกเลี่ยงปัญหา reference
+// เวอร์ชันสมบูรณ์: แก้ไข CORS + Auto Sync (ซิงค์ข้อมูลทันทีทุกครั้งที่โหลดและบันทึก)
 
 // ================ UTILITY FUNCTIONS ================
 function escapeHtml(text) {
@@ -182,7 +182,7 @@ function renderDropdown(id, list, placeholder = "-- เลือก --") {
     element.innerHTML = `<option value="">${escapeHtml(placeholder)}</option>`;
     
     if (!list || !Array.isArray(list)) {
-        console.warn(`Invalid list for dropdown #${id}:`, list);
+        // console.warn(`Invalid list for dropdown #${id}:`, list);
         return;
     }
     
@@ -271,7 +271,7 @@ async function fetchData() {
     try {
         console.log('Fetching data from Google Script...');
         
-        // ใช้ GET request ธรรมดา
+        // ใช้ GET request พร้อม timestamp ป้องกัน cache
         const url = `${GOOGLE_SCRIPT_URL}?action=getData&t=${new Date().getTime()}`;
         
         const response = await fetch(url, {
@@ -300,16 +300,15 @@ async function sendData(payload) {
     try {
         console.log('Sending data to Google Script:', payload.action);
         
-        // แก้ไขตรงนี้: เปลี่ยนวิธีการ fetch
-        // แก้ไขคำว่า const และใส่เครื่องหมายคำพูดให้ URL รวมถึงจัดโครงสร้าง fetch ให้ถูกต้อง
-    const response = await fetch("https://script.google.com/macros/s/AKfycbyBS-rZyl5AqMg-woHQSUbOv1xPqPdjrYCYFilNM0FXHOIsFyNQ8xxMvJp4B1Iry8vaOw/exec", {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-            "Content-Type": "text/plain;charset=utf-8",
-        },
-        body: JSON.stringify(payload)
-    });
+        // ใช้ text/plain เพื่อแก้ปัญหา CORS preflight
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8",
+            },
+            body: JSON.stringify(payload)
+        });
         
         if (!response.ok) {
             throw new Error(`Network response was not ok: ${response.status}`);
@@ -476,10 +475,7 @@ const app = {
     // ตั้งค่า base functions
     setupBaseFunctions() {
         console.log('🔧 Setting up base functions...');
-        
-        // ตั้งค่า utility functions ให้ใช้ผ่าน window
         // ไม่ต้องตั้งค่าอีกเพราะฟังก์ชันถูกประกาศเป็น global อยู่แล้ว
-        console.log('✅ Base functions ready');
     },
     
     // ตั้งค่า UI พื้นฐาน
@@ -632,7 +628,8 @@ const app = {
         const savedSession = localStorage.getItem('wany_admin_session');
         if (savedSession) {
             console.log('👨‍🏫 Admin is logged in');
-            this.showAdminPanel(true);
+            // Force sync even if logged in
+            this.showAdminPanel(false);
         } else {
             console.log('👨‍🎓 Showing student section');
             this.switchMainTab('student');
@@ -693,7 +690,7 @@ const app = {
         }
         
         console.log('🔄 Syncing data with server...');
-        showLoading(true);
+        // showLoading(true); // ปิดการแสดง loading รบกวนเวลาพิมพ์
         
         try {
             const json = await fetchData();
@@ -704,10 +701,9 @@ const app = {
                 this.saveLocalData();
                 this.refreshUI();
                 console.log('✅ Sync successful');
-                showToast("ข้อมูลอัพเดทแล้วจากเซิร์ฟเวอร์", "success");
+                // showToast("ข้อมูลอัพเดทแล้วจากเซิร์ฟเวอร์", "success");
             } else {
                 console.log('⚠️ No valid data from server, using local data');
-                showToast("ใช้ข้อมูลในเครื่อง (เซิร์ฟเวอร์ไม่ตอบสนอง)", "info");
             }
         } catch (e) {
             console.warn('❌ Sync failed:', e);
@@ -2308,6 +2304,11 @@ async handleSave(payload) {
         // Show success message if not queued
         if (result.status !== 'queued') {
             showToast("บันทึกข้อมูลสำเร็จ", "success");
+            
+            // 🔥 FORCE SYNC IMMEDIATELY AFTER SAVE
+            // This ensures data consistency with database
+            console.log('🔄 Triggering immediate sync after save...');
+            await this.appSync();
         }
         
         return result;
@@ -2412,7 +2413,12 @@ renderTaskClassCheckboxes() {
         document.getElementById('admin-login-wrapper').classList.add('hidden');
         document.getElementById('admin-content-wrapper').classList.remove('hidden');
         this.refreshUI();
-        if (!auto) this.appSync();
+        
+        // 🔥 FORCE SYNC IF NOT AUTO (e.g. initial load)
+        if (!auto) {
+            console.log('🔄 Initial load sync triggered...');
+            this.appSync();
+        }
     },
     
     // เพิ่มฟังก์ชันอื่นๆ ที่ขาดหาย...
@@ -2460,12 +2466,12 @@ renderTaskClassCheckboxes() {
     // อื่นๆ...
     checkSmartSchedule() {
         // ฟังก์ชัน placeholder
-        console.log('Checking smart schedule...');
+        // console.log('Checking smart schedule...');
     },
     
     updateInboxBadge() {
         // ฟังก์ชัน placeholder
-        console.log('Updating inbox badge...');
+        // console.log('Updating inbox badge...');
     }
 };
 
