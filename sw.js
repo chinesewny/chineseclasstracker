@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chinese-class-v3'; // เปลี่ยนเวอร์ชั่นเพื่อบังคับอัปเดต cache ใหม่
+const CACHE_NAME = 'chinese-class-v3'; // Updated version
 const ASSETS = [
   './',
   './index.html',
@@ -7,50 +7,57 @@ const ASSETS = [
   './js/utils.js',
   './js/api.js',
   './js/ui.js',
-  // 'https://cdn.tailwindcss.com',  <-- ลบบรรทัดนี้ออก เพราะ CDN บล็อกการโหลดผ่าน SW
+  'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap',
   'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js',
-  'https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@4/dark.css'
+  'https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@4/dark.css',
+  'https://img2.pic.in.th/pic/Logoc404dc85753b800c.png'
 ];
 
 self.addEventListener('install', (e) => {
-  // บังคับให้ SW ตัวใหม่ทำงานทันที (Skip Waiting)
-  self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      // ใช้ try-catch หรือ addAll แบบปกติ แต่ถ้าไฟล์ไหน error จะไม่พังทั้งหมด
-      return cache.addAll(ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
 });
 
 self.addEventListener('activate', (e) => {
-  // ลบ Cache เก่าทิ้งเมื่อมีการอัปเดตเวอร์ชั่น
   e.waitUntil(
-    caches.keys().then((keyList) => {
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        keyList.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
           }
         })
       );
     })
   );
-  return self.clients.claim(); // เข้าควบคุมหน้าเว็บทันที
 });
 
 self.addEventListener('fetch', (e) => {
-  // กรอง request ที่ไม่ใช่ http/https (เช่น chrome-extension://)
-  if (!e.request.url.startsWith('http')) return;
-
   e.respondWith(
     caches.match(e.request).then((res) => {
-      // ถ้ามีใน cache ให้ใช้ใน cache, ถ้าไม่มีให้โหลดใหม่
-      return res || fetch(e.request).catch(() => {
-          // กรณี Offline และหาไฟล์ไม่เจอ (อาจจะ return หน้า fallback ถ้าต้องการ)
+      // Return cached version or fetch new
+      return res || fetch(e.request).then(response => {
+        // Don't cache non-successful responses
+        if(!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
+        
+        // Clone the response
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(e.request, responseToCache);
+        });
+        
+        return response;
       });
+    }).catch(() => {
+      // If both cache and network fail, show offline page
+      if(e.request.url.indexOf('.html') > -1) {
+        return caches.match('./index.html');
+      }
     })
   );
 });
