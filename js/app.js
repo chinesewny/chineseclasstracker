@@ -300,13 +300,20 @@ async function sendData(payload) {
     try {
         console.log('Sending data to Google Script:', payload.action);
         
-        // ใช้ POST request ธรรมดา
+        // แก้ไขตรงนี้: เปลี่ยนวิธีการ fetch
         const response = await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            mode: 'cors',
+            mode: 'cors', // สำคัญ: ต้องเป็น cors
+            // ❌ ลบหรือ comment บรรทัดนี้ออก
+            // headers: {
+            //     'Content-Type': 'application/json',
+            // },
+            
+            // ✅ ใช้บรรทัดนี้แทน เพื่อหลีกเลี่ยง Preflight check
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "text/plain;charset=utf-8",
             },
+            
             body: JSON.stringify(payload)
         });
         
