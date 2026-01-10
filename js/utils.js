@@ -1,6 +1,10 @@
+// Escape HTML special characters to prevent XSS
 export function escapeHtml(text) {
-    if (!text) return text;
-    return text.toString()
+    if (text === null || text === undefined) {
+        return '';
+    }
+    
+    return String(text)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -8,72 +12,133 @@ export function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
+// Get current Thai date in ISO format (YYYY-MM-DD)
 export function getThaiDateISO() {
-    const d = new Date();
-    const u = d.getTime() + (d.getTimezoneOffset() * 60000);
-    const b = new Date(u + (7 * 3600000));
-    return b.toISOString().slice(0, 10);
+    const now = new Date();
+    // Convert to Thailand time (UTC+7)
+    const thaiTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+    
+    const year = thaiTime.getUTCFullYear();
+    const month = String(thaiTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(thaiTime.getUTCDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
 }
 
+// Format date string to Thai format (YYYY/MM/DD)
 export function formatThaiDate(dateString) {
     if (!dateString) return "-";
-    if (dateString.includes('T') || dateString.includes('Z')) {
-        const d = new Date(dateString);
-        return `${d.getFullYear() + 543}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+    
+    try {
+        let date;
+        
+        if (dateString.includes('T') || dateString.includes('Z')) {
+            // ISO format
+            date = new Date(dateString);
+        } else if (dateString.includes('-')) {
+            // YYYY-MM-DD format
+            const [year, month, day] = dateString.split('-');
+            date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        } else {
+            return dateString;
+        }
+        
+        if (isNaN(date.getTime())) {
+            return dateString;
+        }
+        
+        const thaiYear = date.getFullYear() + 543;
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        
+        return `${thaiYear}/${month}/${day}`;
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return dateString;
     }
-    const [year, month, day] = dateString.split('-');
-    return `${parseInt(year) + 543}/${month}/${day}`;
 }
 
-export function calGrade(s) {
-    const score = Number(s);
-    if (score >= 80) return 4;
-    if (score >= 75) return 3.5;
-    if (score >= 70) return 3;
-    if (score >= 65) return 2.5;
-    if (score >= 60) return 2;
-    if (score >= 55) return 1.5;
-    if (score >= 50) return 1;
+// Calculate grade from score
+export function calGrade(score) {
+    const numericScore = Number(score);
+    
+    if (isNaN(numericScore)) return 0;
+    if (numericScore >= 80) return 4;
+    if (numericScore >= 75) return 3.5;
+    if (numericScore >= 70) return 3;
+    if (numericScore >= 65) return 2.5;
+    if (numericScore >= 60) return 2;
+    if (numericScore >= 55) return 1.5;
+    if (numericScore >= 50) return 1;
     return 0;
 }
 
+// Calculate scores for a student
 export function calculateScores(studentId, tasks, scores) {
-    let chapData = Array(6).fill().map(() => ({ earn: 0, max: 0 }));
-    let midterm = 0, final = 0, totalScore = 0;
+    // Initialize chapter data for 6 chapters
+    let chapterData = Array(6).fill().map(() => ({ earned: 0, max: 0 }));
+    let midtermScore = 0;
+    let finalScore = 0;
+    let specialScore = 0;
     
-    tasks.forEach(t => {
-        const scoreLog = scores.find(x => x.studentId == studentId && x.taskId == t.id);
-        const score = scoreLog ? Number(scoreLog.score) : 0;
-        const max = Number(t.maxScore);
+    if (!tasks || !scores) {
+        return {
+            chapScores: Array(6).fill(0),
+            midterm: 0,
+            final: 0,
+            total: 0
+        };
+    }
+    
+    tasks.forEach(task => {
+        if (!task) return;
         
-        if (t.category === 'accum') {
-            const chapters = t.chapter ? t.chapter.toString().split(',') : [];
-            if (chapters.length > 0) {
-                const splitMax = max / chapters.length;
-                const splitScore = score / chapters.length;
-                chapters.forEach(c => {
-                    const idx = parseInt(c) - 1;
-                    if (idx >= 0 && idx < 6) {
-                        chapData[idx].max += splitMax;
-                        chapData[idx].earn += splitScore;
+        const scoreRecord = scores.find(s => s.studentId == studentId && s.taskId == task.id);
+        const earnedScore = scoreRecord ? Number(scoreRecord.score) : 0;
+        const maxScore = Number(task.maxScore) || 0;
+        
+        if (task.category === 'accum') {
+            // Accumulated scores for chapters
+            const chapters = task.chapter ? task.chapter.toString().split(',') : [];
+            
+            if (chapters.length > 0 && maxScore > 0) {
+                const scorePerChapter = earnedScore / chapters.length;
+                const maxPerChapter = maxScore / chapters.length;
+                
+                chapters.forEach(chapter => {
+                    const chapterIndex = parseInt(chapter) - 1;
+                    if (chapterIndex >= 0 && chapterIndex < 6) {
+                        chapterData[chapterIndex].earned += scorePerChapter;
+                        chapterData[chapterIndex].max += maxPerChapter;
                     }
                 });
             }
-        } else if (t.category === 'midterm') midterm += score;
-        else if (t.category === 'final') final += score;
-        
-        if (t.category === 'special') totalScore += score;
+        } else if (task.category === 'midterm') {
+            midtermScore += earnedScore;
+        } else if (task.category === 'final') {
+            finalScore += earnedScore;
+        } else if (task.category === 'special') {
+            specialScore += earnedScore;
+        }
     });
-
-    const chapScores = chapData.map(d => {
-        if (d.max > 0) {
-            return parseFloat((d.earn / d.max * 10).toFixed(1));
+    
+    // Calculate chapter scores (out of 10)
+    const chapterScores = chapterData.map(chapter => {
+        if (chapter.max > 0) {
+            const score = (chapter.earned / chapter.max) * 10;
+            return parseFloat(score.toFixed(1));
         }
         return 0;
     });
     
-    totalScore += chapScores.reduce((a, b) => a + b, 0) + midterm + final;
-    totalScore = parseFloat(totalScore.toFixed(1));
+    // Calculate total score
+    const chapterTotal = chapterScores.reduce((sum, score) => sum + score, 0);
+    const totalScore = chapterTotal + midtermScore + finalScore + specialScore;
     
-    return { chapScores, midterm, final, total: totalScore };
+    return {
+        chapScores: chapterScores,
+        midterm: midtermScore,
+        final: finalScore,
+        total: parseFloat(totalScore.toFixed(1))
+    };
 }
