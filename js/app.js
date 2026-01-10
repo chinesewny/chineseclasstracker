@@ -301,21 +301,15 @@ async function sendData(payload) {
         console.log('Sending data to Google Script:', payload.action);
         
         // แก้ไขตรงนี้: เปลี่ยนวิธีการ fetch
-        const response = await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'cors', // สำคัญ: ต้องเป็น cors
-            // ❌ ลบหรือ comment บรรทัดนี้ออก
-            // headers: {
-            //     'Content-Type': 'application/json',
-            // },
-            
-            // ✅ ใช้บรรทัดนี้แทน เพื่อหลีกเลี่ยง Preflight check
-            headers: {
-                "Content-Type": "text/plain;charset=utf-8",
-            },
-            
-            body: JSON.stringify(payload)
-        });
+        // แก้ไขคำว่า const และใส่เครื่องหมายคำพูดให้ URL รวมถึงจัดโครงสร้าง fetch ให้ถูกต้อง
+    const response = await fetch("https://script.google.com/macros/s/AKfycbyBS-rZyl5AqMg-woHQSUbOv1xPqPdjrYCYFilNM0FXHOIsFyNQ8xxMvJp4B1Iry8vaOw/exec", {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+            "Content-Type": "text/plain;charset=utf-8",
+        },
+        body: JSON.stringify(payload)
+    });
         
         if (!response.ok) {
             throw new Error(`Network response was not ok: ${response.status}`);
