@@ -1,5 +1,5 @@
 // ChineseClass System - Main Application
-// รวมทุกไฟล์ JavaScript เป็นไฟล์เดียวเพื่อหลีกเลี่ยงปัญหา ES6 modules
+// รวมทุกฟังก์ชันในไฟล์เดียวเพื่อหลีกเลี่ยงปัญหา reference
 
 // ================ UTILITY FUNCTIONS ================
 function escapeHtml(text) {
@@ -142,19 +142,141 @@ function calculateScores(studentId, tasks, scores) {
     };
 }
 
+// ================ UI FUNCTIONS ================
+function showToast(message, type = 'success') {
+    if (typeof Swal === 'undefined') {
+        console.log(`${type}: ${message}`);
+        return;
+    }
+    
+    const Toast = Swal.mixin({
+        toast: true, 
+        position: 'bottom', 
+        showConfirmButton: false, 
+        timer: 3000,
+        background: type === 'error' ? '#7f1d1d' : (type === 'warning' ? '#78350f' : '#064e3b'), 
+        color: '#fff'
+    });
+    
+    Toast.fire({ 
+        icon: type, 
+        title: message 
+    });
+}
+
+function showLoading(show = true) {
+    const loader = document.getElementById('global-loader');
+    if(loader) {
+        loader.style.display = show ? 'flex' : 'none';
+    }
+}
+
+function renderDropdown(id, list, placeholder = "-- เลือก --") {
+    const element = document.getElementById(id);
+    if (!element) {
+        console.warn(`Element #${id} not found`);
+        return;
+    }
+    
+    const currentValue = element.value;
+    element.innerHTML = `<option value="">${escapeHtml(placeholder)}</option>`;
+    
+    if (!list || !Array.isArray(list)) {
+        console.warn(`Invalid list for dropdown #${id}:`, list);
+        return;
+    }
+    
+    list.forEach(item => {
+        const option = document.createElement('option');
+        option.value = escapeHtml(item.id);
+        option.textContent = escapeHtml(item.name || item.title || '');
+        element.appendChild(option);
+    });
+    
+    // Restore previous value if it exists in new list
+    if(currentValue && list.some(item => String(item.id) === String(currentValue))) {
+        element.value = currentValue;
+    }
+}
+
+function renderAdminMaterials(materials, subjects) {
+    const container = document.getElementById('admin-mat-list');
+    if(!container) return;
+    
+    container.innerHTML = '';
+    
+    if(!materials || materials.length === 0) {
+        container.innerHTML = '<div class="text-center text-white/50 py-10">ไม่มีเนื้อหา</div>';
+        return;
+    }
+    
+    materials.forEach(material => {
+        const subject = subjects.find(s => s.id == material.subjectId);
+        const subjectName = subject ? subject.name : '-';
+        
+        container.innerHTML += `
+            <div class="bg-white/5 p-3 rounded-xl border border-white/10 flex justify-between items-center hover:bg-white/10 transition-all">
+                <div class="flex-1">
+                    <div class="text-xs text-yellow-400 mb-1">${escapeHtml(subjectName)}</div>
+                    <div class="font-bold text-sm text-white mb-1">
+                        ${escapeHtml(material.title)}
+                    </div>
+                    <a href="${escapeHtml(material.link)}" target="_blank" class="text-blue-300 text-xs hover:underline truncate block">
+                        ${escapeHtml(material.link)}
+                    </a>
+                </div>
+                <button onclick="app.deleteMaterial('${material.id}')" class="text-red-400 hover:text-red-300 ml-2 p-2 rounded-full hover:bg-red-400/10 transition-all">
+                    <i class="fa-solid fa-trash text-sm"></i>
+                </button>
+            </div>`;
+    });
+}
+
+function renderScheduleList(schedules, classes) {
+    const container = document.getElementById('schedule-list');
+    if(!container) return;
+    
+    container.innerHTML = '';
+    
+    if(!schedules || schedules.length === 0) {
+        container.innerHTML = '<div class="text-center text-white/50 py-4">ไม่มีตารางสอน</div>';
+        return;
+    }
+    
+    const days = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+    
+    // Sort by day and period
+    schedules.sort((a,b) => (a.day - b.day) || (a.period - b.period)).forEach(schedule => {
+        const className = classes.find(cls => cls.id == schedule.classId)?.name || '?';
+        
+        container.innerHTML += `
+            <div class="flex justify-between items-center text-xs text-white/70 bg-white/5 p-2 rounded border border-white/5 mb-1 hover:bg-white/10 transition-all">
+                <div class="flex items-center gap-2">
+                    <span class="text-yellow-400">${days[schedule.day]} คาบ ${schedule.period}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-white font-bold">${escapeHtml(className)}</span>
+                    <button onclick="app.deleteSchedule('${schedule.id}')" class="text-red-400 hover:text-red-300 p-1 rounded hover:bg-red-400/10 transition-all">
+                        <i class="fa-solid fa-times text-xs"></i>
+                    </button>
+                </div>
+            </div>`;
+    });
+}
+
 // ================ API FUNCTIONS ================
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBS-rZyl5AqMg-woHQSUbOv1xPqPdjrYCYFilNM0FXHOIsFyNQ8xxMvJp4B1Iry8vaOw/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQNjMSE06u5xO4dtyipa5P-YzoaicppubdwlUgMpaX4L4TUjk3-xY2PRnzhS42AxZe/exec";
 
 async function fetchData() {
     try {
         console.log('Fetching data from Google Script...');
         
-        // ใช้ GET request ธรรมดา (Google Apps Script ควรอนุญาต CORS จากทุกที่)
+        // ใช้ GET request ธรรมดา
         const url = `${GOOGLE_SCRIPT_URL}?action=getData&t=${new Date().getTime()}`;
         
         const response = await fetch(url, {
             method: 'GET',
-            mode: 'cors', // ใช้ cors mode
+            mode: 'cors',
             cache: 'no-cache'
         });
         
@@ -181,7 +303,7 @@ async function sendData(payload) {
         // ใช้ POST request ธรรมดา
         const response = await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            mode: 'cors', // ใช้ cors mode
+            mode: 'cors',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -223,123 +345,12 @@ function saveLocalData() {
 }
 
 function updateLocalState(p) {
-    switch(p.action) {
-        case 'addSubject':
-            if(!app.dataState.subjects.some(s => s.id === p.id)) {
-                app.dataState.subjects.push({id: p.id, name: p.name});
-            }
-            break;
-            
-        case 'addClass':
-            if(!app.dataState.classes.some(c => c.id === p.id)) {
-                app.dataState.classes.push({id: p.id, name: p.name, subjectId: p.subjectId});
-            }
-            break;
-            
-        case 'addStudent':
-            if(!app.dataState.students.some(s => s.id === p.id)) {
-                app.dataState.students.push({
-                    id: p.id, 
-                    classId: p.classId, 
-                    no: p.no, 
-                    code: p.code, 
-                    name: p.name
-                });
-            }
-            break;
-            
-        case 'addTask':
-            p.classIds.forEach((cid, idx) => {
-                const chapStr = Array.isArray(p.chapter) ? p.chapter.join(',') : p.chapter;
-                const taskId = p.id + '-' + idx;
-                if(!app.dataState.tasks.some(t => t.id === taskId)) {
-                    app.dataState.tasks.push({
-                        id: taskId, 
-                        classId: cid, 
-                        subjectId: p.subjectId, 
-                        category: p.category, 
-                        chapter: chapStr, 
-                        name: p.name, 
-                        maxScore: p.maxScore, 
-                        dueDateISO: p.dueDateISO
-                    });
-                }
-            });
-            break;
-            
-        case 'addScore':
-            const scoreIndex = app.dataState.scores.findIndex(s => s.studentId == p.studentId && s.taskId == p.taskId);
-            if(scoreIndex >= 0) {
-                app.dataState.scores[scoreIndex].score = p.score;
-            } else {
-                app.dataState.scores.push({
-                    studentId: p.studentId, 
-                    taskId: p.taskId, 
-                    score: p.score
-                });
-            }
-            app.updateInboxBadge();
-            break;
-            
-        case 'addAttendance':
-            const attIndex = app.dataState.attendance.findIndex(a => a.studentId == p.studentId && a.date == p.date);
-            if(attIndex >= 0) {
-                app.dataState.attendance[attIndex].status = p.status;
-            } else {
-                app.dataState.attendance.push({
-                    studentId: p.studentId, 
-                    classId: p.classId, 
-                    date: p.date, 
-                    status: p.status
-                });
-            }
-            break;
-            
-        case 'submitTask':
-            p.studentIds.forEach(sid => {
-                const subIndex = app.dataState.submissions.findIndex(s => s.studentId == sid && s.taskId == p.taskId);
-                if(subIndex >= 0) { 
-                    app.dataState.submissions[subIndex].link = p.link; 
-                    app.dataState.submissions[subIndex].timestampISO = new Date().toISOString();
-                    app.dataState.submissions[subIndex].comment = p.comment;
-                } else {
-                    app.dataState.submissions.push({
-                        taskId: p.taskId, 
-                        studentId: sid, 
-                        link: p.link, 
-                        timestampISO: new Date().toISOString(), 
-                        comment: p.comment
-                    });
-                }
-            });
-            app.updateInboxBadge();
-            break;
-            
-        case 'addSchedule':
-            if(!app.dataState.schedules.some(s => s.id === p.id)) {
-                app.dataState.schedules.push({
-                    id: p.id, 
-                    day: p.day, 
-                    period: p.period, 
-                    classId: p.classId
-                });
-            }
-            break;
-            
-        case 'addMaterial':
-            if(!app.dataState.materials.some(m => m.id === p.id)) {
-                app.dataState.materials.push({
-                    id: p.id, 
-                    subjectId: p.subjectId, 
-                    title: p.title, 
-                    link: p.link
-                });
-            }
-            break;
+    // ใช้ฟังก์ชันใน app object
+    if (window.app && window.app.updateLocalState) {
+        window.app.updateLocalState(p);
+    } else {
+        console.warn('app.updateLocalState not available yet');
     }
-    
-    // บันทึกลง local storage
-    saveLocalData();
 }
 
 // Queue สำหรับข้อมูลที่ยังไม่ได้ sync
@@ -397,7 +408,7 @@ async function trySyncQueue() {
     }
 }
 
-// ================ MAIN APPLICATION INITIALIZATION ================
+// ================ MAIN APPLICATION ================
 const app = {
     // Global variables
     dataState: { 
@@ -465,27 +476,9 @@ const app = {
     setupBaseFunctions() {
         console.log('🔧 Setting up base functions...');
         
-        // ตั้งค่า utility functions ให้ app
-        window.getThaiDateISO = getThaiDateISO;
-        window.formatThaiDate = formatThaiDate;
-        window.calGrade = calGrade;
-        window.calculateScores = calculateScores;
-        window.escapeHtml = escapeHtml;
-        
-        // ตั้งค่า API functions
-        window.fetchData = fetchData;
-        window.sendData = sendData;
-        window.updateLocalState = this.updateLocalState.bind(this);
-        window.saveLocalData = this.saveLocalData.bind(this);
-        window.addToSyncQueue = addToSyncQueue;
-        window.trySyncQueue = trySyncQueue;
-        
-        // ตั้งค่า UI functions
-        window.showToast = showToast;
-        window.showLoading = showLoading;
-        window.renderDropdown = renderDropdown;
-        window.renderAdminMaterials = renderAdminMaterials;
-        window.renderScheduleList = renderScheduleList;
+        // ตั้งค่า utility functions ให้ใช้ผ่าน window
+        // ไม่ต้องตั้งค่าอีกเพราะฟังก์ชันถูกประกาศเป็น global อยู่แล้ว
+        console.log('✅ Base functions ready');
     },
     
     // ตั้งค่า UI พื้นฐาน
@@ -853,9 +846,10 @@ const app = {
     
     // ================ UPDATE LOCAL STATE ================
     
-    // Update local state (เหมือนในโค้ดก่อนหน้า แต่ bind กับ this)
+    // Update local state 
     updateLocalState(p) {
-        // ใช้ switch case เดิม แต่เรียกผ่าน this.dataState
+        console.log('Updating local state for action:', p.action);
+        
         switch(p.action) {
             case 'addSubject':
                 if(!this.dataState.subjects.some(s => s.id === p.id)) {
@@ -976,6 +970,649 @@ const app = {
         
         // Refresh UI
         this.refreshUI();
+    },
+    
+   // ================ EVENT LISTENERS (แบบเต็ม) ================
+    
+initEventListeners() {
+    console.log('🎯 Initializing event listeners...');
+    
+    // ================ TAB BUTTONS ================
+    document.getElementById('tab-btn-admin')?.addEventListener('click', () => this.switchMainTab('admin'));
+    document.getElementById('tab-btn-student')?.addEventListener('click', () => this.switchMainTab('student'));
+    
+    // ================ ADMIN LOGIN/LOGOUT ================
+    // Admin logout
+    document.getElementById('btn-admin-logout')?.addEventListener('click', () => this.handleAdminLogout());
+    
+    // Admin login form
+    document.getElementById('admin-login-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showLoading(true);
+        const username = document.getElementById('admin-username').value;
+        const password = document.getElementById('admin-password').value;
+        
+        try {
+            const res = await sendData({ action: 'login', username: username, password: password });
+            showLoading(false);
+            if (res.status === 'success') {
+                localStorage.setItem('wany_admin_session', res.token);
+                this.showAdminPanel();
+                showToast("เข้าสู่ระบบสำเร็จ", "success");
+            } else {
+                showToast('รหัสผ่านไม่ถูกต้อง', 'error');
+            }
+        } catch (e) {
+            showLoading(false);
+            showToast('การเชื่อมต่อล้มเหลว', 'error');
+        }
+    });
+    
+    // ================ ADMIN MENU BUTTONS ================
+    document.getElementById('menu-basic')?.addEventListener('click', () => this.switchAdminSubTab('basic'));
+    document.getElementById('menu-scan')?.addEventListener('click', () => this.switchAdminSubTab('scan'));
+    document.getElementById('menu-report')?.addEventListener('click', () => this.switchAdminSubTab('report'));
+    document.getElementById('menu-homework')?.addEventListener('click', () => this.switchAdminSubTab('homework'));
+    document.getElementById('menu-attendance')?.addEventListener('click', () => this.switchAdminSubTab('attendance'));
+    document.getElementById('menu-material')?.addEventListener('click', () => this.switchAdminSubTab('material'));
+    
+    // ================ ADMIN FORMS ================
+    // Form: เพิ่มวิชา
+    document.getElementById('form-subject')?.addEventListener('submit', (e) => { 
+        e.preventDefault(); 
+        const subjectName = document.getElementById('subject-name').value.trim();
+        if (!subjectName) {
+            showToast("กรุณากรอกชื่อวิชา", "warning");
+            return;
+        }
+        this.handleSave({ action:'addSubject', id:Date.now(), name:subjectName }); 
+        e.target.reset();
+        showToast("เพิ่มวิชาสำเร็จ", "success");
+    });
+    
+    // Form: เพิ่มห้องเรียน
+    document.getElementById('form-class')?.addEventListener('submit', (e) => { 
+        e.preventDefault(); 
+        const className = document.getElementById('class-name').value.trim();
+        const subjectId = document.getElementById('class-subject-ref').value;
+        if (!className || !subjectId) {
+            showToast("กรุณากรอกชื่อห้องและเลือกวิชา", "warning");
+            return;
+        }
+        this.handleSave({ action:'addClass', id:Date.now(), name:className, subjectId:subjectId }); 
+        e.target.reset();
+        showToast("เพิ่มห้องเรียนสำเร็จ", "success");
+    });
+    
+    // Form: เพิ่มนักเรียน
+    document.getElementById('form-student')?.addEventListener('submit', (e) => { 
+        e.preventDefault(); 
+        const classId = document.getElementById('student-class').value;
+        const studentNo = document.getElementById('student-no').value;
+        const studentId = document.getElementById('student-id').value.trim();
+        const studentName = document.getElementById('student-name').value.trim();
+        
+        if (!classId || !studentNo || !studentId || !studentName) {
+            showToast("กรุณากรอกข้อมูลให้ครบ", "warning");
+            return;
+        }
+        
+        this.handleSave({ 
+            action: 'addStudent', 
+            id: Date.now(), 
+            classId: classId, 
+            no: studentNo, 
+            code: studentId, 
+            name: studentName 
+        }); 
+        e.target.reset();
+        showToast("เพิ่มนักเรียนสำเร็จ", "success");
+    });
+    
+    // Form: สร้างงาน
+    document.getElementById('form-task')?.addEventListener('submit', (e) => { 
+        e.preventDefault();
+        const classCbs = document.querySelectorAll('#task-class-checkboxes input:checked');
+        const chapCbs = document.querySelectorAll('.chapter-checkbox:checked');
+        const subjectId = document.getElementById('task-subject-filter').value;
+        const category = document.getElementById('task-category').value;
+        const taskName = document.getElementById('task-name').value.trim();
+        const maxScore = document.getElementById('task-max').value;
+        
+        if(classCbs.length === 0) {
+            showToast("กรุณาเลือกห้องเรียน", 'warning');
+            return;
+        }
+        
+        if (!subjectId) {
+            showToast("กรุณาเลือกวิชา", 'warning');
+            return;
+        }
+        
+        if (!taskName) {
+            showToast("กรุณากรอกชื่องาน", 'warning');
+            return;
+        }
+        
+        const selectedChaps = Array.from(chapCbs).map(cb => cb.value);
+        
+        this.handleSave({ 
+            action: 'addTask', 
+            id: Date.now(), 
+            classIds: Array.from(classCbs).map(c => c.value), 
+            subjectId: subjectId, 
+            category: category, 
+            chapter: selectedChaps, 
+            name: taskName, 
+            maxScore: maxScore, 
+            dueDateISO: getThaiDateISO() 
+        });
+        e.target.reset();
+        showToast("สร้างงานสำเร็จ", "success");
+    });
+    
+    // Form: ตารางสอน
+    document.getElementById('form-schedule')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const day = document.getElementById('sch-day').value;
+        const period = document.getElementById('sch-period').value;
+        const classId = document.getElementById('sch-class').value;
+        
+        if (!day || !period || !classId) {
+            showToast("กรุณากรอกข้อมูลให้ครบ", "warning");
+            return;
+        }
+        
+        this.handleSave({
+            action: 'addSchedule',
+            id: Date.now(),
+            day: day,
+            period: period,
+            classId: classId
+        });
+        e.target.reset();
+        showToast("บันทึกตารางสอนสำเร็จ", "success");
+    });
+    
+    // Form: เนื้อหา
+    document.getElementById('form-material')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const subjectId = document.getElementById('mat-subject').value;
+        const title = document.getElementById('mat-title').value.trim();
+        const link = document.getElementById('mat-link').value.trim();
+        
+        if (!subjectId || !title || !link) {
+            showToast("กรุณากรอกข้อมูลให้ครบ", "warning");
+            return;
+        }
+        
+        this.handleSave({
+            action: 'addMaterial',
+            id: Date.now(),
+            subjectId: subjectId,
+            title: title,
+            link: link
+        });
+        e.target.reset();
+        showToast("บันทึกเนื้อหาสำเร็จ", "success");
+    });
+    
+    // ================ STUDENT SECTION ================
+    // Student login
+    document.getElementById('btn-student-login')?.addEventListener('click', () => this.handleStudentLogin());
+    
+    // Student logout
+    document.getElementById('btn-student-logout')?.addEventListener('click', () => this.logoutStudent());
+    
+    // ================ SCAN & ATTENDANCE INPUTS ================
+    // Scan score input
+    document.getElementById('scan-score-input')?.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') {
+            const val = e.target.value.trim();
+            const cid = document.getElementById('scan-class-select').value;
+            const tid = document.getElementById('scan-task-select').value;
+            
+            if(!cid || !tid) {
+                showToast("กรุณาเลือกห้องและงานก่อน", "warning");
+                return;
+            }
+            
+            const student = this.dataState.students.find(st => (st.code == val || st.no == val) && st.classId == cid);
+            if(student) {
+                const task = this.dataState.tasks.find(x => x.id == tid);
+                if(this.scoreMode !== 'manual') {
+                    this.handleSave({action:'addScore', studentId:student.id, taskId:task.id, score:this.scoreMode});
+                    showToast(`${student.name} : ${this.scoreMode}`, "success");
+                    e.target.value = '';
+                } else {
+                    this.pendingScore = { student, task };
+                    document.getElementById('score-modal').classList.remove('hidden');
+                    document.getElementById('modal-task-name').textContent = task.name;
+                    document.getElementById('modal-student-name').textContent = student.name;
+                    document.getElementById('modal-max-score').textContent = task.maxScore;
+                    document.getElementById('modal-score-input').value = '';
+                    setTimeout(() => document.getElementById('modal-score-input').focus(), 100);
+                }
+                e.target.value = '';
+            } else { 
+                showToast("ไม่พบนักเรียน", "error"); 
+                e.target.value=''; 
+            }
+        }
+    });
+    
+    // Attendance scan input
+    document.getElementById('att-scan-input')?.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') {
+            const val = e.target.value.trim();
+            const cid = document.getElementById('att-class-select').value;
+            const date = document.getElementById('att-date-input').value;
+            
+            if(!cid) {
+                showToast("กรุณาเลือกห้องก่อน", "warning");
+                return;
+            }
+            
+            const student = this.dataState.students.find(st => (st.code == val || st.no == val) && st.classId == cid);
+            if(student && this.attMode) {
+                this.handleSave({action:'addAttendance', studentId:student.id, classId:cid, date:date, status:this.attMode});
+                showToast(`${student.name} : ${this.attMode}`, "success");
+                e.target.value = '';
+            } else if(!this.attMode) {
+                showToast("เลือกสถานะก่อน (มา/ลา/ขาด)", "warning");
+            } else {
+                showToast("ไม่พบนักเรียน", "error");
+                e.target.value='';
+            }
+        }
+    });
+    
+    // ================ ATTENDANCE MODE BUTTONS ================
+    document.getElementById('btn-att-present')?.addEventListener('click', () => this.setAttMode('มา'));
+    document.getElementById('btn-att-leave')?.addEventListener('click', () => this.setAttMode('ลา'));
+    document.getElementById('btn-att-absent')?.addEventListener('click', () => this.setAttMode('ขาด'));
+    
+    // ================ SMART CLASS BUTTON ================
+    document.getElementById('btn-use-smart-class')?.addEventListener('click', () => this.useSmartClass());
+    
+    // ================ EXPORT/PRINT BUTTONS ================
+    document.getElementById('btn-export-attendance-csv')?.addEventListener('click', () => this.exportAttendanceCSV());
+    document.getElementById('btn-print-report')?.addEventListener('click', () => this.printOfficialReport());
+    document.getElementById('btn-export-grade-csv')?.addEventListener('click', () => this.exportGradeCSV());
+    
+    // ================ MODAL BUTTONS ================
+    // Score modal
+    document.getElementById('btn-modal-cancel')?.addEventListener('click', () => {
+        document.getElementById('score-modal').classList.add('hidden');
+    });
+    
+    document.getElementById('btn-modal-save')?.addEventListener('click', () => {
+        const val = document.getElementById('modal-score-input').value;
+        if(!val || Number(val) > Number(this.pendingScore.task.maxScore)) {
+            showToast("คะแนนไม่ถูกต้อง", "error");
+            return;
+        }
+        this.handleSave({action:'addScore', studentId:this.pendingScore.student.id, taskId:this.pendingScore.task.id, score:val});
+        document.getElementById('score-modal').classList.add('hidden');
+        showToast("บันทึกคะแนนสำเร็จ", "success");
+    });
+    
+    document.getElementById('modal-score-input')?.addEventListener('keydown', (e) => { 
+        if(e.key === 'Enter') document.getElementById('btn-modal-save').click(); 
+    });
+    
+    // Submit modal
+    document.getElementById('btn-submit-cancel')?.addEventListener('click', () => {
+        document.getElementById('submit-modal').classList.add('hidden');
+    });
+    
+    document.getElementById('form-submit-work')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const taskId = document.getElementById('submit-task-id').value;
+        const studentId = document.getElementById('submit-student-id').value;
+        const link = document.getElementById('submit-link-input').value.trim();
+        const comment = document.getElementById('submit-comment-input').value.trim();
+        
+        if (!link) {
+            showToast("กรุณากรอกลิงก์งาน", "warning");
+            return;
+        }
+        
+        // Get selected friends
+        const selectedFriends = Array.from(document.querySelectorAll('#friend-selector-container input:checked')).map(cb => cb.value);
+        const studentIds = [studentId, ...selectedFriends];
+        
+        this.handleSave({
+            action: 'submitTask',
+            taskId: taskId,
+            studentIds: studentIds,
+            link: link,
+            comment: comment
+        });
+        
+        document.getElementById('submit-modal').classList.add('hidden');
+        e.target.reset();
+        showToast("ส่งงานเรียบร้อยแล้ว", "success");
+    });
+    
+    // ================ SELECT CHANGE EVENTS ================
+    document.getElementById('scan-class-select')?.addEventListener('change', () => { 
+        this.updateScanTaskDropdown(); 
+        this.renderScoreRoster(); 
+    });
+    
+    document.getElementById('scan-task-select')?.addEventListener('change', () => this.renderScoreRoster());
+    document.getElementById('att-class-select')?.addEventListener('change', () => this.renderAttRoster());
+    document.getElementById('att-date-input')?.addEventListener('change', () => this.renderAttRoster());
+    document.getElementById('report-class')?.addEventListener('change', () => this.renderGradeReport());
+    document.getElementById('task-subject-filter')?.addEventListener('change', () => this.renderTaskClassCheckboxes());
+    
+    // ================ MANUAL SCORE BUTTONS ================
+    document.getElementById('btn-score-manual')?.addEventListener('click', () => this.setScoreMode('manual'));
+    
+    // ================ CHAPTER CHECKBOXES ================
+    // ตั้งค่า event listeners สำหรับ chapter checkboxes
+    document.querySelectorAll('.chapter-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const div = this.nextElementSibling;
+            if (this.checked) {
+                div.classList.remove('bg-black/30', 'text-white/50');
+                div.classList.add('bg-gradient-to-br', 'from-yellow-600', 'to-yellow-800', 'text-white');
+            } else {
+                div.classList.remove('bg-gradient-to-br', 'from-yellow-600', 'to-yellow-800', 'text-white');
+                div.classList.add('bg-black/30', 'text-white/50');
+            }
+        });
+    });
+    
+    // ================ MANUAL SYNC BUTTON ================
+    // เพิ่มปุ่ม manual sync ถ้ามี
+    const manualSyncBtn = document.querySelector('[onclick*="manualSync"]');
+    if (manualSyncBtn) {
+        manualSyncBtn.addEventListener('click', () => this.manualSync());
+    }
+    
+    // ================ IMPORT/EXPORT BUTTONS ================
+    // Export data button
+    const exportBtn = document.querySelector('[onclick*="exportData"]');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => this.exportData());
+    }
+    
+    // Import data input
+    const importInput = document.querySelector('input[type="file"][accept=".json"]');
+    if (importInput) {
+        importInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                this.importData(e.target.files[0]);
+            }
+        });
+    }
+    
+    // ================ DYNAMIC ELEMENT EVENT DELEGATION ================
+    // สำหรับ elements ที่สร้างแบบ dynamic
+    document.addEventListener('click', (e) => {
+        // สำหรับปุ่ม submit grade ใน incoming submissions
+        if (e.target.matches('button[onclick*="submitGrade"]') || 
+            e.target.closest('button[onclick*="submitGrade"]')) {
+            const button = e.target.matches('button') ? e.target : e.target.closest('button');
+            const onclick = button.getAttribute('onclick');
+            const match = onclick.match(/submitGrade\('([^']+)', '([^']+)', '([^']+)', (\d+)\)/);
+            if (match) {
+                e.preventDefault();
+                this.submitGrade(match[1], match[2], match[3], match[4]);
+            }
+        }
+        
+        // สำหรับปุ่ม delete material/schedule
+        if (e.target.matches('button[onclick*="deleteMaterial"]') || 
+            e.target.closest('button[onclick*="deleteMaterial"]')) {
+            const button = e.target.matches('button') ? e.target : e.target.closest('button');
+            const onclick = button.getAttribute('onclick');
+            const match = onclick.match(/deleteMaterial\('([^']+)'\)/);
+            if (match) {
+                e.preventDefault();
+                this.deleteMaterial(match[1]);
+            }
+        }
+        
+        if (e.target.matches('button[onclick*="deleteSchedule"]') || 
+            e.target.closest('button[onclick*="deleteSchedule"]')) {
+            const button = e.target.matches('button') ? e.target : e.target.closest('button');
+            const onclick = button.getAttribute('onclick');
+            const match = onclick.match(/deleteSchedule\('([^']+)'\)/);
+            if (match) {
+                e.preventDefault();
+                this.deleteSchedule(match[1]);
+            }
+        }
+        
+        // สำหรับปุ่ม open submit modal
+        if (e.target.matches('button[onclick*="openSubmitModal"]') || 
+            e.target.closest('button[onclick*="openSubmitModal"]')) {
+            const button = e.target.matches('button') ? e.target : e.target.closest('button');
+            const onclick = button.getAttribute('onclick');
+            const match = onclick.match(/openSubmitModal\('([^']+)', '([^']+)'\)/);
+            if (match) {
+                e.preventDefault();
+                this.openSubmitModal(match[1], match[2]);
+            }
+        }
+    });
+    
+    // ================ FORM VALIDATION ================
+    // เพิ่ม validation ให้กับ inputs
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('input', (e) => {
+            const value = e.target.value;
+            const max = e.target.max;
+            if (max && Number(value) > Number(max)) {
+                e.target.value = max;
+                showToast(`ค่าสูงสุดคือ ${max}`, "warning");
+            }
+        });
+    });
+    
+    // ================ KEYBOARD SHORTCUTS ================
+    document.addEventListener('keydown', (e) => {
+        // ESC to close modals
+        if (e.key === 'Escape') {
+            if (!document.getElementById('score-modal').classList.contains('hidden')) {
+                document.getElementById('score-modal').classList.add('hidden');
+            }
+            if (!document.getElementById('submit-modal').classList.contains('hidden')) {
+                document.getElementById('submit-modal').classList.add('hidden');
+            }
+        }
+        
+        // Ctrl+S to save (ใน forms ที่ active)
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            const activeForm = document.querySelector('form:focus-within');
+            if (activeForm) {
+                activeForm.dispatchEvent(new Event('submit'));
+            }
+        }
+    });
+    
+    console.log('✅ Event listeners initialized');
+},
+
+// ================ SUPPORTING FUNCTIONS ================
+
+// Handle save data
+async handleSave(payload) {
+    console.log('Saving data:', payload.action);
+    
+    // Optimistic local update
+    this.updateLocalState(payload);
+    
+    try {
+        // Send to server
+        const result = await sendData(payload);
+        console.log('Save successful:', result);
+        
+        // Show success message if not queued
+        if (result.status !== 'queued') {
+            showToast("บันทึกข้อมูลสำเร็จ", "success");
+        }
+        
+        return result;
+    } catch(e) {
+        console.error('Save failed:', e);
+        showToast("บันทึกไม่สำเร็จ (รอ Sync)", "error");
+        throw e;
+    }
+},
+
+// Set attendance mode
+setAttMode(mode) {
+    this.attMode = mode;
+    
+    // Reset all buttons
+    document.getElementById('btn-att-present')?.classList.remove('btn-att-active-present');
+    document.getElementById('btn-att-leave')?.classList.remove('btn-att-active-leave');
+    document.getElementById('btn-att-absent')?.classList.remove('btn-att-active-absent');
+    
+    // Activate selected button
+    if(mode === 'มา') {
+        document.getElementById('btn-att-present')?.classList.add('btn-att-active-present');
+    } else if(mode === 'ลา') {
+        document.getElementById('btn-att-leave')?.classList.add('btn-att-active-leave');
+    } else if(mode === 'ขาด') {
+        document.getElementById('btn-att-absent')?.classList.add('btn-att-active-absent');
+    }
+    
+    // Focus on scan input
+    const attInput = document.getElementById('att-scan-input'); 
+    if(attInput) attInput.focus();
+},
+
+// Render task class checkboxes
+renderTaskClassCheckboxes() {
+    const subjectId = document.getElementById('task-subject-filter').value; 
+    const container = document.getElementById('task-class-checkboxes'); 
+    
+    container.innerHTML='';
+    
+    if(!subjectId) return;
+    
+    const classList = this.dataState.classes.filter(cls => cls.subjectId == subjectId);
+    
+    if(classList.length === 0) {
+        container.innerHTML = '<div class="text-center text-white/50 text-xs p-2">ไม่มีห้องเรียนสำหรับวิชานี้</div>';
+        return;
+    }
+    
+    classList.forEach(cls => { 
+        container.innerHTML += `
+            <label class="flex items-center gap-2 p-2 rounded hover:bg-white/10 cursor-pointer transition-all">
+                <input type="checkbox" value="${cls.id}" class="accent-yellow-500 w-4 h-4 rounded">
+                <span class="text-xs text-white/80">${cls.name}</span>
+            </label>`; 
+    });
+},
+    
+    // ================ PUBLIC METHODS ================
+    
+    // Switch main tab
+    switchMainTab(tab) {
+        console.log('Switching to tab:', tab);
+        
+        // Hide all sections
+        document.getElementById('section-admin').classList.add('hidden');
+        document.getElementById('section-student').classList.add('hidden');
+        
+        // Show selected section
+        document.getElementById(`section-${tab}`).classList.remove('hidden');
+        
+        // Update tab buttons
+        const adminBtn = document.getElementById('tab-btn-admin');
+        const studentBtn = document.getElementById('tab-btn-student');
+        
+        if(tab === 'admin'){
+            adminBtn.className = "px-6 py-2 rounded-full text-sm font-bold bg-white text-blue-900 shadow-lg"; 
+            studentBtn.className = "px-6 py-2 rounded-full text-sm font-bold text-white/50 hover:text-white transition-all";
+            
+            // Check if admin is logged in
+            const savedSession = localStorage.getItem('wany_admin_session');
+            if (!savedSession) {
+                document.getElementById('admin-login-wrapper').classList.remove('hidden');
+                document.getElementById('admin-content-wrapper').classList.add('hidden');
+            } else {
+                document.getElementById('admin-login-wrapper').classList.add('hidden');
+                document.getElementById('admin-content-wrapper').classList.remove('hidden');
+                this.refreshUI();
+            }
+        } else { 
+            studentBtn.className = "px-6 py-2 rounded-full text-sm font-bold bg-white text-blue-900 shadow-lg"; 
+            adminBtn.className = "px-6 py-2 rounded-full text-sm font-bold text-white/50 hover:text-white transition-all";
+            
+            // Show student login by default
+            document.getElementById('student-login-wrapper').classList.remove('hidden');
+            document.getElementById('student-dashboard').classList.add('hidden');
+        }
+    },
+    
+    // Show admin panel
+    showAdminPanel(auto = false) {
+        document.getElementById('admin-login-wrapper').classList.add('hidden');
+        document.getElementById('admin-content-wrapper').classList.remove('hidden');
+        this.refreshUI();
+        if (!auto) this.appSync();
+    },
+    
+    // เพิ่มฟังก์ชันอื่นๆ ที่ขาดหาย...
+    renderScoreButtons() {
+        const container = document.getElementById('score-buttons-container'); 
+        if(!container) return; 
+        
+        container.innerHTML=''; 
+        
+        [5,6,7,8,9,10].forEach(score => { 
+            const button = document.createElement('button'); 
+            button.textContent = score; 
+            button.className = "btn-score py-2 rounded-lg border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all"; 
+            button.addEventListener('click', () => this.setScoreMode(score)); 
+            container.appendChild(button); 
+        }); 
+    },
+    
+    setScoreMode(mode) {
+        this.scoreMode = mode; 
+        
+        // Update score buttons
+        document.querySelectorAll('.btn-score').forEach(button => {
+            button.classList.remove('btn-score-active');
+            if(button.textContent == mode) {
+                button.classList.add('btn-score-active');
+            }
+        });
+        
+        // Update manual button
+        const manualBtn = document.getElementById('btn-score-manual');
+        if(manualBtn) {
+            if(mode === 'manual') {
+                manualBtn.classList.add('btn-score-active');
+            } else {
+                manualBtn.classList.remove('btn-score-active');
+            }
+        }
+        
+        // Focus on scan input
+        const scanInput = document.getElementById('scan-score-input'); 
+        if(scanInput) scanInput.focus();
+    },
+    
+    // อื่นๆ...
+    checkSmartSchedule() {
+        // ฟังก์ชัน placeholder
+        console.log('Checking smart schedule...');
+    },
+    
+    updateInboxBadge() {
+        // ฟังก์ชัน placeholder
+        console.log('Updating inbox badge...');
     }
 };
 
@@ -988,53 +1625,21 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // แสดงสถานะเริ่มต้น
     const statusDiv = document.createElement('div');
-    statusDiv.className = 'fixed bottom-4 right-4 bg-black/70 text-white text-xs px-3 py-1 rounded-full z-50';
+    statusDiv.className = 'fixed bottom-4 right-4 bg-black/70 text-white text-xs px-3 py-1 rounded-full z-50 hidden';
     statusDiv.id = 'app-status';
     statusDiv.textContent = '🟢 ChineseClass Ready';
     document.body.appendChild(statusDiv);
     
-    // อัพเดทสถานะทุก 30 วินาที
-    setInterval(() => {
-        const statusDiv = document.getElementById('app-status');
-        if (statusDiv) {
-            const dataCount = Object.values(app.dataState).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
-            const syncQueue = JSON.parse(localStorage.getItem('sync_queue') || '[]');
-            const queueCount = syncQueue.length;
-            
-            let statusText = `📊 ${dataCount} items`;
-            if (queueCount > 0) {
-                statusText += ` | ⏳ ${queueCount} pending`;
-            }
-            if (!app.isOnline) {
-                statusText += ' | 📴 Offline';
-            }
-            
-            statusDiv.textContent = statusText;
-        }
-    }, 30000);
+    console.log('✅ App initialization complete');
 });
 
 // ================ GLOBAL ERROR HANDLING ================
 window.addEventListener('error', function(e) {
     console.error('🚨 Global error:', e.error);
     
-    // แสดง error ใน UI (เฉพาะใน development)
+    // แสดง error ใน console เท่านั้น
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'fixed top-4 right-4 bg-red-900/90 text-white p-3 rounded-lg max-w-md z-50';
-        errorDiv.innerHTML = `
-            <div class="font-bold mb-1">Error:</div>
-            <div class="text-sm mb-2">${e.message}</div>
-            <div class="text-xs opacity-75">${e.filename}:${e.lineno}</div>
-        `;
-        document.body.appendChild(errorDiv);
-        
-        // ลบหลังจาก 10 วินาที
-        setTimeout(() => {
-            if (errorDiv.parentNode) {
-                errorDiv.parentNode.removeChild(errorDiv);
-            }
-        }, 10000);
+        console.error('Error details:', e.message, 'at', e.filename, ':', e.lineno);
     }
 });
 
