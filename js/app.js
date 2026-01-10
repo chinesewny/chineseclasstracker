@@ -265,7 +265,7 @@ function renderScheduleList(schedules, classes) {
 }
 
 // ================ API FUNCTIONS ================
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQNjMSE06u5xO4dtyipa5P-YzoaicppubdwlUgMpaX4L4TUjk3-xY2PRnzhS42AxZe/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBS-rZyl5AqMg-woHQSUbOv1xPqPdjrYCYFilNM0FXHOIsFyNQ8xxMvJp4B1Iry8vaOw/exec";
 
 async function fetchData() {
     try {
